@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  background: #080b0f;
+  color: #e8edf2;
+  font-family: 'Syne', system-ui, sans-serif;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: #1e2a38; border-radius: 4px; }
+
+.cp-input {
+  background: #0a0f16;
+  border: 1px solid #1e2a38;
+  color: #e8edf2;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  width: 100%;
+  outline: none;
+}
+.cp-input:focus { border-color: #00ff88; }
+
+.cp-btn {
+  background: #00ff88;
+  color: #06110c;
+  font-weight: 700;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.15s;
+}
+.cp-btn:hover { transform: translateY(-1px); }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}

@@ -1,0 +1,418 @@
+# PLANO DE IMPLEMENTAÇÃO — CRIPTOPASSIVO SAAS COMO UPSELL PÓS-COMPRA (CAKTO)
+
+> **Contexto:** Produto principal = Ebook (pagamento único). Upsell = SaaS CriptoPassivo Pro R$ 57,90/mês (recorrente).
+> **Posição upsell:** Pós-compra (página separada após pagar ebook).
+> **Revogação:** Imediata em `payment_failed`, `subscription.cancelled`, `charge.refunded`.
+> **Grace period:** NENHUM.
+> **Meta:** Pronto para vender no domingo.
+
+---
+
+## RESUMO DAS DECISÕES
+
+| Item | Decisão |
+|------|---------|
+| Produto principal | Ebook (pagamento único) |
+| Upsell | SaaS CriptoPassivo Pro — R$ 57,90/mês (recorrente) |
+| Posição upsell | Pós-compra (página separada após pagar ebook) |
+| Revogação | Imediata em `payment_failed`, `subscription.cancelled`, `charge.refunded` |
+| Grace period | **Nenhum** |
+| Notificações (email/WhatsApp) | **Fora do escopo agora** — só depois |
+
+---
+
+## FASE 0 — CRÍTICOS DE PRODUÇÃO (3-4h) — HOJE
+
+### C1: Cache Redis + Rate Limit `/api/prices`
+
+**Arquivos novos:**
+- `lib/redis.ts` — cliente Upstash (REST)
+- `lib/ratelimit.ts` — helper `ratelimit(key, limit, windowMs)`
+
+**Arquivo alterado:**
+- `app/api/prices/route.ts`
+  - Importar `ratelimit` + `redis`
+  - No `GET`: `const ip = request.headers.get('x-forwarded-for') || 'anon'`
+  - `const { success } = await ratelimit(\`prices:\${ip}\`, 30, 60_000)`
+  - Se `!success` → `return NextResponse.json({error: 'Rate limit'}, {status: 429})`
+  - Cache: `const cached = await redis.get('coingecko:prices')` (TTL 20s)
+  - Se cache miss → fetch CoinGecko → `redis.setex('coingecko:prices', 20, JSON.stringify(data))`
+
+---
+
+### C2: Validação Zod nas Mutações
+
+**Arquivo novo:**
+- `lib/validators.ts`
+```ts
+export const addAssetSchema = z.object({
+  name: z.string().min(1).max(100),
+  coingecko_id: z.string().min(1),
+  category: z.enum(['Core','Estável','Satélite','Reserva']),
+  target_pct: z.number().min(0).max(100),
+  quantity: z.number().positive(),
+  apy: z.number().min(0).max(1000),
+});
+
+export const addSaleSchema = z.object({
+  asset_name: z.string().min(1).max(100),
+  sale_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  sale_value: z.number().positive(),
+  cost_value: z.number().nonnegative(),
+});
+```
+
+**Arquivo alterado:**
+- `DashboardClient.tsx`
+  - Importar schemas
+  - Em `addAsset`: `const data = addAssetSchema.parse(payload)` antes do `supabase.insert`
+  - Em `addSale`: `const data = addSaleSchema.parse(payload)`
+  - Try/catch → `toast.error(e.message)` (preparação pro C3)
+
+---
+
+### C3: Toast Notifications (sonner)
+
+**Arquivos novos:**
+- `components/ToastProvider.tsx` — `<Toaster position="top-right" />`
+- `app/providers.tsx` — wrapper client `<ToastProvider>{children}</ToastProvider>`
+
+**Arquivos alterados:**
+- `app/layout.tsx` — importar `<Providers>` envolve `{children}`
+- `DashboardClient.tsx`
+  - `import { toast } from 'sonner'`
+  - `addAsset`: `toast.success('Ativo adicionado')` / `toast.error(e.message)`
+  - `removeAsset`: `toast.success('Removido')` / `toast.error(...)`
+  - `addSale` / `removeSale`: igual
+
+---
+
+### C4: `NEXT_PUBLIC_APP_URL` fixa
+
+**Arquivos alterados:**
+- `.env.example` — adicionar `NEXT_PUBLIC_APP_URL=http://localhost:3000`
+- `app/login/page.tsx` — `emailRedirectTo: \`\${process.env.NEXT_PUBLIC_APP_URL}/auth/callback\``
+- `app/auth/callback/route.ts` — `NextResponse.redirect(\`\${process.env.NEXT_PUBLIC_APP_URL}/dashboard\`)`
+
+---
+
+### C5: Proteger `/api/prices` no Middleware
+
+**Arquivo alterado:**
+- `middleware.ts`
+  - Adicionar no matcher: `matcher: ['/dashboard/:path*', '/api/prices']`
+  - Ou criar `if (request.nextUrl.pathname.startsWith('/api/prices')) { auth check }`
+
+---
+
+## FASE 1 — CAKTO UPSELL + ACCESS CONTROL (3-4h) — AMANHÃ
+
+### U1: Migration `user_profiles`
+
+**Arquivo novo:**
+- `supabase/migrations/0002_profiles.sql`
+```sql
+create table if not exists user_profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  plan text not null default 'free' check (plan in ('free','pro')),
+  cakto_customer_id text,
+  cakto_subscription_id text,
+  subscription_status text default 'inactive' check (subscription_status in ('active','cancelled','past_due','inactive')),
+  subscription_expires_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table user_profiles enable row level security;
+
+create policy "Users view own profile" on user_profiles for select using (auth.uid() = id);
+create policy "Users insert own profile" on user_profiles for insert with check (auth.uid() = id);
+create policy "Users update own profile" on user_profiles for update using (auth.uid() = id);
+
+create index if not exists idx_user_profiles_cakto_customer on user_profiles(cakto_customer_id);
+create index if not exists idx_user_profiles_cakto_sub on user_profiles(cakto_subscription_id);
+```
+
+---
+
+### U2: Webhook `/api/cakto/webhook`
+
+**Arquivos novos:**
+- `lib/cakto.ts` — cliente + helpers
+```ts
+export const caktoApi = {
+  async createCheckout(params: { customerId: string; productId: string; externalId: string }) { ... },
+  async getCustomerPortalUrl(customerId: string) { ... },
+};
+
+export function verifyCaktoSignature(payload: string, signature: string, secret: string): boolean {
+  const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+}
+```
+
+- `app/api/cakto/webhook/route.ts`
+```ts
+export async function POST(req: NextRequest) {
+  const rawBody = await req.text();
+  const signature = req.headers.get('x-cakto-signature') || '';
+  
+  if (!verifyCaktoSignature(rawBody, signature, process.env.CAKTO_WEBHOOK_SECRET!)) {
+    return NextResponse.json({error: 'Invalid signature'}, {status: 401});
+  }
+  
+  const event = JSON.parse(rawBody);
+  const supabase = createServerClient();
+  
+  switch (event.type) {
+    case 'purchase.approved':
+      // Upsell do SaaS: event.data.items[0].product_id === CAKTO_SAAS_PRODUCT_ID
+      await activateProPlan(supabase, event.data.customer.id, event.data.subscription.id);
+      break;
+    case 'subscription.renewed':
+      await extendProPlan(supabase, event.data.subscription.id);
+      break;
+    case 'subscription.cancelled':
+    case 'payment_failed':
+    case 'charge.refunded':
+      await revokeProPlanImmediate(supabase, event.data.subscription.id);
+      break;
+  }
+  return NextResponse.json({received: true});
+}
+```
+
+**Helpers em `lib/cakto.ts`:**
+- `activateProPlan(supabase, customerId, subscriptionId)` → upsert `user_profiles` com `plan='pro'`, `status='active'`, `expires_at = now() + 30 days`
+- `extendProPlan` → estende `expires_at + 30 days`
+- `revokeProPlanImmediate` → `plan='free'`, `status='cancelled'`, `expires_at = now()`
+
+---
+
+### U3: Server Action Checkout Upsell
+
+**Arquivo alterado:**
+- `lib/cakto.ts` (adicionar)
+```ts
+'use server';
+
+export async function createUpsellCheckout(userId: string) {
+  const supabase = createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.id !== userId) throw new Error('Unauthorized');
+  
+  // Buscar ou criar customer no Cakto
+  let { data: profile } = await supabase.from('user_profiles').select('cakto_customer_id').eq('id', userId).single();
+  
+  const customerId = profile?.cakto_customer_id || await createCaktoCustomer(user.email!, userId);
+  
+  const checkout = await caktoApi.createCheckout({
+    customerId,
+    productId: process.env.CAKTO_SAAS_PRODUCT_ID!,
+    externalId: userId,
+  });
+  
+  // Salvar customer_id se novo
+  if (!profile?.cakto_customer_id) {
+    await supabase.from('user_profiles').upsert({ id: userId, cakto_customer_id: customerId });
+  }
+  
+  redirect(checkout.url);
+}
+```
+
+---
+
+### U4: Gate no Server Component Dashboard
+
+**Arquivo alterado:**
+- `app/dashboard/page.tsx`
+```tsx
+const supabase = createClient();
+const { data: { user } } = await supabase.auth.getUser();
+if (!user) redirect('/login');
+
+const { data: profile } = await supabase
+  .from('user_profiles')
+  .select('plan, subscription_status, subscription_expires_at')
+  .eq('id', user.id)
+  .single();
+
+const isPro = profile?.plan === 'pro' && profile?.subscription_status === 'active' 
+  && (!profile.subscription_expires_at || new Date(profile.subscription_expires_at) > new Date());
+
+const [{ data: assets }, { data: sales }] = await Promise.all([...]);
+
+return <DashboardClient userEmail={user.email!!} initialAssets={assets!!} initialSales={sales!!} isPro={isPro} />;
+```
+
+---
+
+### U5: Client Gate + Banner Upgrade
+
+**Arquivo alterado:**
+- `DashboardClient.tsx`
+  - Props: `isPro: boolean`
+  - Estado `assetLimit = isPro ? Infinity : 5`
+  - No `addAsset`: `if (assets.length >= assetLimit) { toast.error('Limite de 5 ativos no plano gratuito'); return; }`
+  - Banner no topo (aba Carteira):
+  ```tsx
+  {!isPro && (
+    <div className="bg-gold/10 border border-gold/30 rounded-lg p-4 mb-4 flex items-center justify-between">
+      <span>Plano Grátis: limite de 5 ativos. <strong>Desbloqueie ilimitado + IR completo por R$ 57,90/mês</strong></span>
+      <Button onClick={() => createUpsellCheckoutAction(userId)}>Assinar Pro</Button>
+    </div>
+  )}
+  ```
+  - `createUpsellCheckoutAction` = Server Action importada
+
+---
+
+### U6: Página `/conta`
+
+**Arquivo novo:**
+- `app/conta/page.tsx` (Server Component)
+  - Busca `user_profiles`
+  - Se `plan === 'pro'`: mostra status, próxima cobrança, botão "Gerenciar no Cakto" → `caktoApi.getCustomerPortalUrl(customerId)`
+  - Se `plan === 'free'`: botão "Assinar Pro" → Server Action
+
+---
+
+## FASE 2 — LEGAL MÍNIMO + IR FIX (1.5h) — DOMINGO MANHÃ
+
+### L1: Páginas Termos/Privacidade
+
+**Arquivos novos:**
+- `app/termos/page.tsx` — texto básico LGPD, uso, cancelamento
+- `app/privacidade/page.tsx` — dados coletados, cookies, Supabase, Cakto
+
+---
+
+### L2: Checkbox no Login
+
+**Arquivo alterado:**
+- `app/login/page.tsx`
+  - `const [accepted, setAccepted] = useState(false)`
+  - Input `type="checkbox"` + links `/termos` `/privacidade`
+  - Botão `disabled={!accepted || loading}`
+
+---
+
+### L3: IR Tabela Progressiva 2024
+
+**Arquivo alterado:**
+- `DashboardClient.tsx` — função `totalTaxEstimate`
+```ts
+const brackets = [
+  { max: 0, rate: 0 },           // isenção (ganho até 35k vendas no mês)
+  { max: 35000, rate: 0.15 },    // 15%
+  { max: 50000, rate: 0.175 },   // 17.5%
+  { max: 100000, rate: 0.20 },   // 20%
+  { max: Infinity, rate: 0.225 },// 22.5%
+];
+// Aplicar sobre ganho de capital total do mês (venda - custo)
+```
+> Nota: regra real é mais complexa (apuração mensal, compensação prejuízo). Isso é aproximação didática + disclaimer.
+
+---
+
+### L4: Disclaimer Fixo Aba IR
+
+**Arquivo alterado:**
+- `DashboardClient.tsx` (componente `IRTab`)
+  - Banner fixo no topo:
+  ```tsx
+  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-4 text-sm text-red-300">
+    ⚠️ <strong>Simulação simplificada.</strong> Não substitui contador. 
+    Regras oficiais: <a href="https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda" target="_blank" className="underline">Receita Federal</a>.
+  </div>
+  ```
+
+---
+
+## FASE 3 — POLISH MÍNIMO (45min) — DOMINGO TARDE
+
+| Item | Ação |
+|------|------|
+| **P1** | `confirm('Tem certeza?')` antes de `removeAsset` / `removeSale` |
+| **P2** | `disabled={loading}` + spinner nos botões Add/Remove |
+| **P3** | `app/favicon.ico` + `app/layout.tsx` metadata (title, description, OG tags) |
+
+---
+
+## VARIÁVEIS DE AMBIENTE (PRODUÇÃO)
+
+```env
+# App
+NEXT_PUBLIC_APP_URL=https://seudominio.com.br
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+
+# Upstash Redis (grátis 10k/dia)
+UPSTASH_REDIS_REST_URL=https://...
+UPSTASH_REDIS_REST_TOKEN=...
+
+# Cakto
+CAKTO_API_KEY=sk_live_...
+CAKTO_WEBHOOK_SECRET=whsec_...
+CAKTO_SAAS_PRODUCT_ID=prod_...    # Produto "CriptoPassivo Pro" no Cakto
+```
+
+---
+
+## CHECKLIST "DOMINGO PRONTO P/ VENDER"
+
+| Item | Status |
+|------|--------|
+| Deploy Vercel + Supabase prod | ☐ |
+| Upstash Redis criado + env vars | ☐ |
+| Produto SaaS criado no Cakto (R$ 57,90/mês, recorrente) | ☐ |
+| Webhook Cakto → `https://seudominio.com.br/api/cakto/webhook` | ☐ |
+| Migration `0002_profiles.sql` rodou no Supabase | ☐ |
+| Free: limite 5 ativos + banner upgrade | ☐ |
+| Pro: ilimitado + IR completo | ☐ |
+| Termos/Privacidade no ar + checkbox login | ☐ |
+| IR tabela progressiva + disclaimer | ☐ |
+| Toast errors funcionando | ☐ |
+| `/api/prices` rate limited + cached | ☐ |
+
+---
+
+## PRÓXIMOS PASSOS (PÓS-LANÇAMENTO — FORA DO ESCOPO)
+
+- Entrega do Ebook (página protegida `/ebook` ou link assinado)
+- WhatsApp (Zenvia/Evolution) + Email (Resend) nos webhooks de revogação
+- Portal do cliente Cakto (cancelar, trocar cartão, faturas)
+- Landing page do Ebook com upsell integrado
+- Analytics / Sentry / Testes
+
+---
+
+## PERGUNTA CRÍTICA PARA CONFIRMAÇÃO
+
+> **O webhook `purchase.approved` do Cakto no upsell pós-compra: o `event.data.items` vem com o `product_id` do upsell (SaaS) ou do produto principal (Ebook)?**
+
+Isso define como filtro no webhook:
+```ts
+// Se vem o item do upsell:
+const isSaaSUpsell = event.data.items.some(i => i.product_id === CAKTO_SAAS_PRODUCT_ID);
+
+// Se vem só o ebook e upsell é purchase separado:
+const isSaaSUpsell = event.data.product_id === CAKTO_SAAS_PRODUCT_ID;
+```
+
+**Pode confirmar como o Cakto estrutura o payload no upsell pós-compra?** (ou eu assumo `items` array e filtro por `product_id`)
+
+---
+
+## INSTRUÇÃO PARA EXECUÇÃO
+
+Após confirmar a estrutura do webhook, **gere os diffs por arquivo** (linhas exatas a mudar/código novo) para eu revisar e aprovar **uma fase por vez**, na ordem:
+1. Fase 0 (C1→C5)
+2. Fase 1 (U1→U6)
+3. Fase 2 (L1→L4)
+4. Fase 3 (P1→P3)
+
+Cada aprovação = você executa os diffs dessa fase.

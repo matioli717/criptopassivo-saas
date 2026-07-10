@@ -1,0 +1,17 @@
+{
+  "name": "CriptoPassivo",
+  "short_name": "CriptoPassivo",
+  "description": "Dashboard Renda Passiva Cripto",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#080b0f",
+  "theme_color": "#00ff88",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

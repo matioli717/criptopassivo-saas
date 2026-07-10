@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Radio } from "lucide-react";
+import { Radio, CheckCircle } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
+  const [accepted, setAccepted] = useState(false);
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -14,13 +15,17 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!accepted) {
+      setError("Você precisa aceitar os Termos e a Política de Privacidade");
+      return;
+    }
     setLoading(true);
     setError("");
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${location.origin}/auth/callback`,
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
       },
     });
 
@@ -63,7 +68,21 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <button type="submit" disabled={loading} className="cp-btn w-full justify-center">
+
+              <label className="flex items-start gap-2 mb-4 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={accepted}
+                  onChange={(e) => setAccepted(e.target.checked)}
+                  className="mt-1 w-4 h-4 accent-accent border-border bg-card text-accent focus:ring-accent rounded"
+                />
+                <span className="text-xs text-muted leading-relaxed">
+                  Li e aceito os <a href="/termos" className="underline hover:text-accent">Termos de Uso</a> e a
+                  <a href="/privacidade" className="underline hover:text-accent">Política de Privacidade</a>
+                </span>
+              </label>
+
+              <button type="submit" disabled={loading || !accepted} className="cp-btn w-full justify-center opacity-50 hover:opacity-100 disabled:cursor-not-allowed">
                 {loading ? "Enviando..." : "Entrar com link mágico"}
               </button>
               {error && <p className="text-xs text-gold mt-3">{error}</p>}

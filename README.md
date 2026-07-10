@@ -7,7 +7,7 @@ dados salvos por usuário no Supabase.
 ## Stack
 
 - Next.js 14 (App Router) + TypeScript
-- Supabase (Auth via magic link + Postgres com RLS)
+- Supabase (Auth com e-mail e senha + Postgres com RLS)
 - Tailwind CSS
 - Recharts (gráficos)
 - CoinGecko API (preço em tempo real, via rota interna `/api/prices`)
@@ -45,10 +45,15 @@ cp .env.example .env.local
 
 Edite `.env.local` com a URL e a anon key do seu projeto Supabase.
 
-### 5. Habilitar magic link no Supabase
+### 5. Habilitar login por e-mail e senha no Supabase
 
 Authentication → Providers → Email → confirme que "Enable email provider"
-está ativo (vem ativo por padrão). Não precisa de senha, é só link mágico.
+está ativo (vem ativo por padrão). Em "Confirm email", escolha se novos usuários
+precisarão confirmar o endereço antes do primeiro login.
+
+Em Authentication → URL Configuration, configure a URL do site e adicione
+`http://localhost:3000/auth/callback` nas Redirect URLs para desenvolvimento.
+No ambiente de produção, adicione também `https://seu-dominio/auth/callback`.
 
 ### 6. Rodar o projeto
 
@@ -76,8 +81,9 @@ do Next.js já cobrem isso), Vercel sozinho resolve.
 ```
 app/
   page.tsx                 → redireciona pra /login ou /dashboard
-  login/page.tsx           → login com magic link
-  auth/callback/route.ts   → troca o código do magic link pela sessão
+  login/page.tsx           → redireciona usuário autenticado
+  login/LoginForm.tsx      → login e cadastro com e-mail e senha
+  auth/callback/route.ts   → confirma o e-mail e cria a sessão
   dashboard/page.tsx       → busca dados iniciais no servidor
   dashboard/DashboardClient.tsx → toda a UI interativa (gráficos, CRUD)
   api/prices/route.ts      → busca preço real na CoinGecko (com cache de 20s)

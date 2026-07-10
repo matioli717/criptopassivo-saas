@@ -8,11 +8,11 @@ import {
 import {
   Wallet, TrendingUp, AlertTriangle, Plus, Trash2, Radio, Calculator,
   ShieldAlert, ArrowUpRight, ArrowDownRight, Activity, FileText,
-  LayoutDashboard, LogOut, Lock, Unlock,
+  LayoutDashboard, LogOut, Lock, Unlock, Pencil, Save, X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { SUPPORTED_ASSETS } from "@/lib/assets";
-import { addAssetSchema, addSaleSchema } from "@/lib/validators";
+import { addAssetSchema, addSaleSchema, updateAssetSchema } from "@/lib/validators";
 import { createUpsellCheckout } from "@/app/actions/cakto";
 import { toast } from "sonner";
 
@@ -35,6 +35,7 @@ const FREE_ASSET_LIMIT = 5;
 
 type Asset = {
   id: string;
+  user_id: string;
   name: string;
   coingecko_id: string;
   category: string;
@@ -43,17 +44,48 @@ type Asset = {
   apy: number;
 };
 
+type AssetPayload = Omit<Asset, "id" | "user_id">;
+type AssetUpdatePayload = Pick<Asset, "name" | "category" | "target_pct" | "quantity" | "apy">;
+
 type Sale = {
   id: string;
+  user_id: string;
   asset_name: string;
   sale_date: string | null;
   sale_value: number;
   cost_value: number;
 };
 
+type SalePayload = Omit<Sale, "id" | "user_id">;
+
 const brl = (n: number) =>
   (n || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 2 });
 const pct = (n: number) => `${(n || 0).toFixed(1)}%`;
+
+const getCurrentMonthKey = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+};
+
+const getTaxSummary = (sales: Sale[], month: string) => {
+  const monthlySales = sales.filter((sale) => sale.sale_date?.slice(0, 7) === month);
+  const salesSum = monthlySales.reduce((sum, sale) => sum + Number(sale.sale_value || 0), 0);
+  const gainSum = monthlySales.reduce(
+    (sum, sale) => sum + Math.max(0, Number(sale.sale_value || 0) - Number(sale.cost_value || 0)),
+    0
+  );
+
+  return { monthlySales, salesSum, gainSum, tax: salesSum > 35000 ? gainSum * 0.15 : 0 };
+};
+
+const mutationErrorMessage = (error: unknown) => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error !== null && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  return "Tente novamente.";
+};
 
 export default function DashboardClient({
   userEmail,
@@ -68,12 +100,13 @@ export default function DashboardClient({
   initialSales: Sale[];
   isPro: boolean;
 }) {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [tab, setTab] = useState<"dashboard" | "carteira" | "rendimento" | "ir">("dashboard");
   const [assets, setAssets] = useState<Asset[]>(initialAssets);
   const [sales, setSales] = useState<Sale[]>(initialSales);
   const [prices, setPrices] = useState<Record<string, { brl: number }>>({});
   const [history, setHistory] = useState<{ t: number; v: number }[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // ---- preço real via nossa rota /api/prices (CoinGecko por trás) ----
   const fetchPrices = useCallback(async () => {
@@ -125,89 +158,130 @@ export default function DashboardClient({
     return worst;
   }, [liveAssets, totalValue]);
 
-  const totalTaxEstimate = useMemo(() => {
-    const gainSum = sales.reduce((s, x) => s + Math.max(0, x.sale_value - x.cost_value), 0);
-    const salesSum = sales.reduce((s, x) => s + x.sale_value, 0);
+  const currentMonth = useMemo(() => getCurrentMonthKey(), []);
+  const totalTaxEstimate = useMemo(() => getTaxSummary(sales, currentMonth).tax, [currentMonth, sales]);
 
-    // Tabela progressiva IR 2024 (ganho de capital)
-    // Isenção: vendas até R$ 35.000,00 no mês = ganho isento
-    if (salesSum <= 35000) return 0;
-
-    // Acima da isenção, alíquotas progressivas sobre o ganho total do mês
-    const brackets = [
-      { max: 35000, rate: 0.15 },
-      { max: 50000, rate: 0.175 },
-      { max: 100000, rate: 0.20 },
-      { max: 300000, rate: 0.225 },
-      { max: Infinity, rate: 0.225 }, // acima de 300k permanece 22,5%
-    ];
-
-    let tax = 0;
-    let remaining = gainSum;
-    let previousMax = 0;
-
-    for (const bracket of brackets) {
-      const taxableInBracket = Math.min(remaining, bracket.max - previousMax);
-      if (taxableInBracket <= 0) break;
-      tax += taxableInBracket * bracket.rate;
-      remaining -= taxableInBracket;
-      previousMax = bracket.max;
-      if (remaining <= 0) break;
-    }
-
-    return tax;
-  }, [sales]);
+  const reportMutationError = (action: string, error: unknown) => {
+    console.error(action, error);
+    const message = `${action}: ${mutationErrorMessage(error)}`;
+    setErrorMessage(message);
+    toast.error(message);
+  };
 
   // ---- CRUD ----
-  const addAsset = async (payload: Omit<Asset, "id">) => {
+  const addAsset = async (payload: AssetPayload) => {
+    setErrorMessage(null);
     if (!isPro && assets.length >= FREE_ASSET_LIMIT) {
       toast.error(`Limite de ${FREE_ASSET_LIMIT} ativos no plano gratuito. Faça upgrade para ilimitado.`);
-      return;
+      return false;
     }
     const result = addAssetSchema.safeParse(payload);
     if (!result.success) {
       toast.error(result.error.issues.map(e => e.message).join(', '));
-      return;
+      return false;
     }
-    const { data, error } = await supabase.from("portfolio_assets").insert(result.data).select().single();
-    if (error) {
-      toast.error(error.message);
-    } else if (data) {
-      setAssets((prev) => [...prev, data as Asset]);
-      toast.success("Ativo adicionado");
+    const { data, error } = await supabase
+      .from("portfolio_assets")
+      .insert({ ...result.data, user_id: userId })
+      .select()
+      .single();
+    if (error || !data) {
+      reportMutationError("Erro ao adicionar ativo", error ?? new Error("Ativo não retornado pelo Supabase."));
+      return false;
     }
+    setAssets((prev) => [...prev, data as Asset]);
+    toast.success("Ativo adicionado");
+    return true;
   };
+
+  const updateAsset = async (id: string, payload: AssetUpdatePayload) => {
+    setErrorMessage(null);
+    const result = updateAssetSchema.safeParse(payload);
+    if (!result.success) {
+      toast.error(result.error.issues.map((issue) => issue.message).join(", "));
+      return false;
+    }
+    const { data, error } = await supabase
+      .from("portfolio_assets")
+      .update(result.data)
+      .eq("id", id)
+      .eq("user_id", userId)
+      .select()
+      .single();
+    if (error || !data) {
+      reportMutationError("Erro ao editar ativo", error ?? new Error("Ativo não retornado pelo Supabase."));
+      return false;
+    }
+    setAssets((prev) => prev.map((asset) => (asset.id === id ? (data as Asset) : asset)));
+    toast.success("Ativo atualizado");
+    return true;
+  };
+
   const removeAsset = async (id: string) => {
-    if (!confirm("Tem certeza que deseja remover este ativo?")) return;
-    setAssets((prev) => prev.filter((a) => a.id !== id));
-    const { error } = await supabase.from("portfolio_assets").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else toast.success("Ativo removido");
+    setErrorMessage(null);
+    const { data, error } = await supabase
+      .from("portfolio_assets")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", userId)
+      .select("id")
+      .single();
+    if (error || !data) {
+      reportMutationError("Erro ao remover ativo", error ?? new Error("Ativo não removido pelo Supabase."));
+      return false;
+    }
+    setAssets((prev) => prev.filter((asset) => asset.id !== id));
+    toast.success("Ativo removido");
+    return true;
   };
-  const addSale = async (payload: Omit<Sale, "id">) => {
+
+  const addSale = async (payload: SalePayload) => {
+    setErrorMessage(null);
     const result = addSaleSchema.safeParse(payload);
     if (!result.success) {
       toast.error(result.error.issues.map(e => e.message).join(', '));
+      return false;
+    }
+    const { data, error } = await supabase
+      .from("sales")
+      .insert({ ...result.data, user_id: userId })
+      .select()
+      .single();
+    if (error || !data) {
+      reportMutationError("Erro ao registrar venda", error ?? new Error("Venda não retornada pelo Supabase."));
+      return false;
+    }
+    setSales((prev) => [...prev, data as Sale]);
+    toast.success("Venda registrada");
+    return true;
+  };
+
+  const removeSale = async (id: string) => {
+    setErrorMessage(null);
+    const { data, error } = await supabase
+      .from("sales")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", userId)
+      .select("id")
+      .single();
+    if (error || !data) {
+      reportMutationError("Erro ao remover venda", error ?? new Error("Venda não removida pelo Supabase."));
+      return false;
+    }
+    setSales((prev) => prev.filter((sale) => sale.id !== id));
+    toast.success("Venda removida");
+    return true;
+  };
+
+  const signOut = async () => {
+    setErrorMessage(null);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      reportMutationError("Erro ao sair", error);
       return;
     }
-    const { data, error } = await supabase.from("sales").insert(result.data).select().single();
-    if (error) {
-      toast.error(error.message);
-    } else if (data) {
-      setSales((prev) => [...prev, data as Sale]);
-      toast.success("Venda registrada");
-    }
-  };
-  const removeSale = async (id: string) => {
-    if (!confirm("Tem certeza que deseja remover esta venda?")) return;
-    setSales((prev) => prev.filter((s) => s.id !== id));
-    const { error } = await supabase.from("sales").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else toast.success("Venda removida");
-  };
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    location.href = "/login";
+    location.assign("/login");
   };
 
   return (
@@ -247,6 +321,7 @@ export default function DashboardClient({
           </div>
 
           <div className="px-6 py-6 pb-16">
+            {errorMessage && <ErrorBanner message={errorMessage} onDismiss={() => setErrorMessage(null)} />}
             {tab === "dashboard" && (
               <DashboardTab
                 totalValue={totalValue}
@@ -257,12 +332,12 @@ export default function DashboardClient({
                 history={history}
               />
             )}
-{tab === "carteira" && (
-              <CarteiraTab liveAssets={liveAssets} totalValue={totalValue} addAsset={addAsset} removeAsset={removeAsset} isPro={isPro} userId={userId} />
+            {tab === "carteira" && (
+              <CarteiraTab liveAssets={liveAssets} totalValue={totalValue} addAsset={addAsset} updateAsset={updateAsset} removeAsset={removeAsset} isPro={isPro} userId={userId} />
             )}
             {tab === "rendimento" && <RendimentoTab liveAssets={liveAssets} />}
             {tab === "ir" && (
-              <IRTab sales={sales} addSale={addSale} removeSale={removeSale} totalTaxEstimate={totalTaxEstimate} />
+              <IRTab sales={sales} addSale={addSale} removeSale={removeSale} />
             )}
           </div>
         </main>
@@ -319,6 +394,17 @@ function EmptyState({ text }: { text: string }) {
   return (
     <div className="border border-dashed border-border rounded-[10px] p-10 text-center text-muted text-[13px]">
       {text}
+    </div>
+  );
+}
+
+function ErrorBanner({ message, onDismiss }: { message: string; onDismiss: () => void }) {
+  return (
+    <div role="alert" className="mb-5 flex items-center justify-between gap-4 rounded-lg border border-red-500/40 bg-red-950/40 p-4 text-sm text-red-200">
+      <div className="flex items-center gap-2"><AlertTriangle size={17} /> {message}</div>
+      <button type="button" onClick={onDismiss} className="text-red-200 hover:text-white" aria-label="Fechar mensagem de erro">
+        <X size={17} />
+      </button>
     </div>
   );
 }
@@ -397,24 +483,56 @@ function DashboardTab({ totalValue, totalMonthlyYield, maxDeviation, totalTaxEst
 
 // ---------------------------------------------------------------
 
-function CarteiraTab({ liveAssets, totalValue, addAsset, removeAsset, isPro, userId }: any) {
+function CarteiraTab({ liveAssets, totalValue, addAsset, updateAsset, removeAsset, isPro, userId }: any) {
   const [form, setForm] = useState({ name: "", symbol: "ETH", category: "Core", target_pct: "", quantity: "", apy: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [editingAssetId, setEditingAssetId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", category: "Core", target_pct: "", quantity: "", apy: "" });
+
+  const startEditing = (asset: Asset) => {
+    setEditingAssetId(asset.id);
+    setEditForm({
+      name: asset.name,
+      category: asset.category,
+      target_pct: String(asset.target_pct ?? 0),
+      quantity: String(asset.quantity ?? 0),
+      apy: String(asset.apy ?? 0),
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingAssetId(null);
+    setEditForm({ name: "", category: "Core", target_pct: "", quantity: "", apy: "" });
+  };
+
+  const saveEditing = async (asset: Asset) => {
+    const saved = await updateAsset(asset.id, {
+      name: editForm.name.trim() || asset.name,
+      category: editForm.category,
+      target_pct: Number(editForm.target_pct) || 0,
+      quantity: Number(editForm.quantity) || 0,
+      apy: Number(editForm.apy) || 0,
+    });
+    if (saved) cancelEditing();
+  };
 
   const submit = async () => {
     if (!form.quantity || submitting) return;
     setSubmitting(true);
     const asset = SUPPORTED_ASSETS[form.symbol];
-    await addAsset({
-      name: form.name || asset.label,
-      coingecko_id: asset.coingeckoId,
-      category: form.category,
-      target_pct: Number(form.target_pct) || 0,
-      quantity: Number(form.quantity) || 0,
-      apy: Number(form.apy) || 0,
-    });
-    setForm({ name: "", symbol: "ETH", category: "Core", target_pct: "", quantity: "", apy: "" });
-    setSubmitting(false);
+    try {
+      const saved = await addAsset({
+        name: form.name || asset.label,
+        coingecko_id: asset.coingeckoId,
+        category: form.category,
+        target_pct: Number(form.target_pct) || 0,
+        quantity: Number(form.quantity) || 0,
+        apy: Number(form.apy) || 0,
+      });
+      if (saved) setForm({ name: "", symbol: "ETH", category: "Core", target_pct: "", quantity: "", apy: "" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleUpgradeClick = async () => {
@@ -508,11 +626,11 @@ function CarteiraTab({ liveAssets, totalValue, addAsset, removeAsset, isPro, use
         <EmptyState text="Nenhum ativo ainda. Adicione o primeiro pra ver sua carteira ganhar vida." />
       ) : (
         <>
-          <div className="bg-card border border-border rounded-[10px] overflow-hidden mb-4.5" style={{ marginBottom: 18 }}>
-            <table className="w-full border-collapse text-[13px]">
+          <div className="bg-card border border-border rounded-[10px] overflow-x-auto mb-4.5" style={{ marginBottom: 18 }}>
+            <table className="w-full min-w-[1120px] border-collapse text-[13px]">
               <thead>
                 <tr className="bg-[#0a0f16]">
-                  {["Ativo", "Categoria", "Qtd.", "Preço Atual", "Valor (ao vivo)", "% Atual", "Desvio", ""].map((h) => (
+                  {["Ativo", "Categoria", "Qtd.", "Alvo %", "APY", "Preço Atual", "Valor (ao vivo)", "% Atual", "Desvio", ""].map((h) => (
                     <th key={h} className="text-left px-3.5 py-2.5 text-[10.5px] text-muted font-mono tracking-wide uppercase">{h}</th>
                   ))}
                 </tr>
@@ -521,15 +639,32 @@ function CarteiraTab({ liveAssets, totalValue, addAsset, removeAsset, isPro, use
                 {liveAssets.map((a: any) => {
                   const currentPct = totalValue ? (a.liveValue / totalValue) * 100 : 0;
                   const dev = currentPct - a.target_pct;
+                  const isEditing = editingAssetId === a.id;
                   return (
                     <tr key={a.id} className="border-t border-border">
-                      <td className="px-3.5 py-2.5 font-semibold">{a.name}</td>
-                      <td className="px-3.5 py-2.5">
-                        <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: `${CAT_COLORS[a.category]}22`, color: CAT_COLORS[a.category] }}>
-                          {a.category}
-                        </span>
+                      <td className="px-3.5 py-2.5 font-semibold">
+                        {isEditing ? (
+                          <input className="cp-input min-w-[150px]" value={editForm.name} onChange={(event) => setEditForm({ ...editForm, name: event.target.value })} />
+                        ) : a.name}
                       </td>
-                      <td className="px-3.5 py-2.5 font-mono text-muted">{a.quantity}</td>
+                      <td className="px-3.5 py-2.5">
+                        {isEditing ? (
+                          <select className="cp-input min-w-[120px]" value={editForm.category} onChange={(event) => setEditForm({ ...editForm, category: event.target.value })}>
+                            {CATEGORIES.map((category) => <option key={category}>{category}</option>)}
+                          </select>
+                        ) : (
+                          <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: `${CAT_COLORS[a.category]}22`, color: CAT_COLORS[a.category] }}>{a.category}</span>
+                        )}
+                      </td>
+                      <td className="px-3.5 py-2.5 font-mono text-muted">
+                        {isEditing ? <input className="cp-input min-w-[90px]" type="number" step="any" value={editForm.quantity} onChange={(event) => setEditForm({ ...editForm, quantity: event.target.value })} /> : a.quantity}
+                      </td>
+                      <td className="px-3.5 py-2.5 font-mono text-muted">
+                        {isEditing ? <input className="cp-input min-w-[80px]" type="number" step="any" value={editForm.target_pct} onChange={(event) => setEditForm({ ...editForm, target_pct: event.target.value })} /> : pct(a.target_pct)}
+                      </td>
+                      <td className="px-3.5 py-2.5 font-mono text-muted">
+                        {isEditing ? <input className="cp-input min-w-[80px]" type="number" step="any" value={editForm.apy} onChange={(event) => setEditForm({ ...editForm, apy: event.target.value })} /> : pct(a.apy)}
+                      </td>
                       <td className="px-3.5 py-2.5 font-mono text-muted">{a.price ? brl(a.price) : "..."}</td>
                       <td className="px-3.5 py-2.5 font-mono">{brl(a.liveValue)}</td>
                       <td className="px-3.5 py-2.5 font-mono">{pct(currentPct)}</td>
@@ -538,7 +673,19 @@ function CarteiraTab({ liveAssets, totalValue, addAsset, removeAsset, isPro, use
                         {dev > 0 ? "+" : ""}{dev.toFixed(1)} p.p.
                       </td>
                       <td className="px-3.5 py-2.5">
-                        <Trash2 size={14} color={MUTED} className="cursor-pointer" onClick={() => { if (confirm("Tem certeza que deseja remover este ativo?")) removeAsset(a.id); }} />
+                        <div className="flex items-center gap-2">
+                          {isEditing ? (
+                            <>
+                              <button type="button" className="cp-btn" onClick={() => saveEditing(a)}><Save size={14} /> Salvar</button>
+                              <button type="button" className="text-muted hover:text-ink" onClick={cancelEditing} title="Cancelar"><X size={16} /></button>
+                            </>
+                          ) : (
+                            <>
+                              <button type="button" className="flex items-center gap-1 text-muted hover:text-ink" onClick={() => startEditing(a)}><Pencil size={14} /> Editar</button>
+                              <button type="button" className="text-muted hover:text-red-300" onClick={() => { if (confirm("Tem certeza que deseja remover este ativo?")) removeAsset(a.id); }} title="Remover"><Trash2 size={14} /></button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -650,25 +797,31 @@ function RendimentoTab({ liveAssets }: any) {
 
 // ---------------------------------------------------------------
 
-function IRTab({ sales, addSale, removeSale, totalTaxEstimate }: any) {
+function IRTab({ sales, addSale, removeSale }: any) {
   const [form, setForm] = useState({ name: "", date: "", saleValue: "", costValue: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(() => getCurrentMonthKey());
+  const { monthlySales, salesSum, gainSum, tax } = useMemo(
+    () => getTaxSummary(sales, selectedMonth),
+    [sales, selectedMonth]
+  );
 
   const submit = async () => {
-    if (!form.name || !form.saleValue || !form.costValue || submitting) return;
+    if (!form.name || !form.date || !form.saleValue || !form.costValue || submitting) return;
     setSubmitting(true);
-    await addSale({
-      asset_name: form.name,
-      sale_date: form.date || null,
-      sale_value: Number(form.saleValue),
-      cost_value: Number(form.costValue),
-    });
-    setForm({ name: "", date: "", saleValue: "", costValue: "" });
-    setSubmitting(false);
+    try {
+      const saved = await addSale({
+        asset_name: form.name,
+        sale_date: form.date,
+        sale_value: Number(form.saleValue),
+        cost_value: Number(form.costValue),
+      });
+      if (saved) setForm({ name: "", date: "", saleValue: "", costValue: "" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const salesSum = sales.reduce((s: number, x: Sale) => s + x.sale_value, 0);
-  const gainSum = sales.reduce((s: number, x: Sale) => s + Math.max(0, x.sale_value - x.cost_value), 0);
   const isento = salesSum <= 35000;
 
   return (
@@ -676,15 +829,22 @@ function IRTab({ sales, addSale, removeSale, totalTaxEstimate }: any) {
       <SectionTitle title="Declaração de Cripto no IR" sub="Registre suas vendas do mês e veja se está dentro da faixa de isenção" />
 
       <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-4 text-sm text-red-300">
-        ⚠️ <strong>Simulação educacional — tabela progressiva 2024.</strong> Não substitui contador.
+        ⚠️ <strong>Simulação educacional com alíquota simplificada de 15%.</strong> Não substitui contador.
         <a href="https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda" target="_blank" rel="noopener noreferrer" className="underline ml-1">Receita Federal</a>.
       </div>
 
       <div className="rounded-lg px-4 py-3 mb-5 text-[12.5px] leading-relaxed" style={{ background: "rgba(201,162,74,0.08)", border: `1px solid ${GOLD}44`, borderLeft: `3px solid ${GOLD}`, color: "#d9c896" }}>
         Vendas de cripto até <strong>R$ 35.000,00 no mês</strong> (somando todas as exchanges) são isentas de imposto
-        sobre o ganho de capital. Acima disso, o ganho é tributado por alíquotas progressivas (15% a 22,5%).
-        Esta calculadora aplica a tabela progressiva 2024 — <strong>não substitui contador.</strong>
+        sobre o ganho de capital. Acima disso, esta calculadora aplica 15% sobre o ganho positivo do mês.
+        <strong> Não substitui contador.</strong>
         <a href="https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda" target="_blank" rel="noopener noreferrer" className="underline ml-1">Consulte a Receita Federal</a>.
+      </div>
+
+      <div className="bg-card border border-border rounded-[10px] p-[18px] mb-[18px]">
+        <div className="max-w-xs">
+          <Label>Mês de apuração</Label>
+          <input className="cp-input" type="month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value || getCurrentMonthKey())} />
+        </div>
       </div>
 
       <div className="flex gap-3.5 flex-wrap mb-5">
@@ -697,7 +857,7 @@ function IRTab({ sales, addSale, removeSale, totalTaxEstimate }: any) {
           sub={isento ? "dentro da faixa de R$35k" : "acima da faixa de isenção"}
           tone={isento ? "accent" : "warn"}
         />
-        <Kpi icon={ShieldAlert} label="Imposto Estimado" value={brl(totalTaxEstimate)} tone={totalTaxEstimate > 0 ? "warn" : undefined} />
+        <Kpi icon={ShieldAlert} label="Imposto Estimado" value={brl(tax)} tone={tax > 0 ? "warn" : undefined} />
       </div>
 
       <div className="bg-card border border-border rounded-[10px] p-[18px] mb-[18px]">
@@ -709,7 +869,7 @@ function IRTab({ sales, addSale, removeSale, totalTaxEstimate }: any) {
           </div>
           <div>
             <Label>Data</Label>
-            <input className="cp-input" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+            <input className="cp-input" type="date" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
           </div>
           <div>
             <Label>Valor Venda (R$)</Label>
@@ -737,7 +897,7 @@ function IRTab({ sales, addSale, removeSale, totalTaxEstimate }: any) {
         </div>
       </div>
 
-      {sales.length === 0 ? (
+      {monthlySales.length === 0 ? (
         <EmptyState text="Nenhuma venda registrada este mês. Adicione uma pra calcular o ganho de capital." />
       ) : (
         <div className="bg-card border border-border rounded-[10px] overflow-hidden">
@@ -750,7 +910,7 @@ function IRTab({ sales, addSale, removeSale, totalTaxEstimate }: any) {
               </tr>
             </thead>
             <tbody>
-              {sales.map((s: Sale) => (
+              {monthlySales.map((s: Sale) => (
                 <tr key={s.id} className="border-t border-border">
                   <td className="px-3.5 py-2.5 font-semibold">{s.asset_name}</td>
                   <td className="px-3.5 py-2.5 text-muted">{s.sale_date || "—"}</td>

@@ -9,6 +9,14 @@ export const addAssetSchema = z.object({
   apy: z.number().min(0).max(1000),
 });
 
+export const updateAssetSchema = z.object({
+  name: z.string().min(1).max(100),
+  category: z.enum(['Core', 'Estável', 'Satélite', 'Reserva']),
+  target_pct: z.number().min(0).max(100),
+  quantity: z.number().nonnegative(),
+  apy: z.number().min(0).max(1000),
+});
+
 export const addSaleSchema = z.object({
   asset_name: z.string().min(1).max(100),
   sale_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),

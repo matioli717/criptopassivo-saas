@@ -87,12 +87,12 @@ export const addSaleSchema = z.object({
 
 ---
 
-### C4: `NEXT_PUBLIC_APP_URL` fixa
+### C4: URLs da aplicação e confirmação de e-mail
 
 **Arquivos alterados:**
 - `.env.example` — adicionar `NEXT_PUBLIC_APP_URL=http://localhost:3000`
-- `app/login/page.tsx` — `emailRedirectTo: \`\${process.env.NEXT_PUBLIC_APP_URL}/auth/callback\``
-- `app/auth/callback/route.ts` — `NextResponse.redirect(\`\${process.env.NEXT_PUBLIC_APP_URL}/dashboard\`)`
+- `app/login/LoginForm.tsx` — cadastro com e-mail e senha e callback de confirmação
+- `app/auth/callback/route.ts` — confirma o código e redireciona para o dashboard
 
 ---
 

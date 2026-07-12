@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { timingSafeEqual } from "crypto";
 
 export const CAKTO_SAAS_PRODUCT_ID = process.env.CAKTO_SAAS_PRODUCT_ID!;
 
@@ -8,7 +9,7 @@ interface CaktoEvent {
   data: {
     id: string;
     refId: string;
-    customer: { name: string; email: string; phone: string };
+    customer: { id?: string; name: string; email: string; phone: string };
     offer: { id: string; name: string; price: number };
     offer_type: string;
     product: { id: string; name: string; type: string };
@@ -21,32 +22,20 @@ interface CaktoEvent {
 }
 
 export function verifyCaktoSecret(secret: string): boolean {
-  return secret === process.env.CAKTO_WEBHOOK_SECRET;
+  const expected = process.env.CAKTO_WEBHOOK_SECRET ?? "";
+  if (secret.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(secret), Buffer.from(expected));
 }
 
 type SupabaseClient = ReturnType<typeof createClient>;
 
-async function getProfileByCaktoCustomerId(supabase: SupabaseClient, customerId: string) {
-  const { data } = await supabase
-    .from('user_profiles')
-    .select('id, cakto_customer_id')
-    .eq('cakto_customer_id', customerId)
-    .single();
-  return data;
-}
-
-async function getProfileByUserId(supabase: SupabaseClient, userId: string) {
-  const { data } = await supabase
-    .from('user_profiles')
-    .select('id, cakto_customer_id')
-    .eq('id', userId)
-    .single();
-  return data;
-}
-
-export async function activateProPlan(supabase: SupabaseClient, customerId: string, subscriptionId: string, userId?: string) {
+export async function activateProPlan(supabase: SupabaseClient, customerValue: string, subscriptionId: string, userId?: string, kind: "id" | "email" = "id") {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 30);
+
+  const customerField = kind === "email"
+    ? { cakto_customer_email: customerValue }
+    : { cakto_customer_id: customerValue };
 
   const updates = {
     plan: 'pro' as const,
@@ -57,10 +46,10 @@ export async function activateProPlan(supabase: SupabaseClient, customerId: stri
   };
 
   if (userId) {
-    const { error } = await supabase.from('user_profiles').upsert({ id: userId, ...updates, cakto_customer_id: customerId });
+    const { error } = await supabase.from('user_profiles').upsert({ id: userId, ...updates, ...customerField });
     if (error) throw error;
   } else {
-    const { error } = await supabase.from('user_profiles').upsert({ cakto_customer_id: customerId, ...updates });
+    const { error } = await supabase.from('user_profiles').upsert({ ...customerField, ...updates });
     if (error) throw error;
   }
 }
@@ -93,14 +82,4 @@ export async function revokeProPlanImmediate(supabase: SupabaseClient, subscript
     .eq('cakto_subscription_id', subscriptionId);
 
   if (error) throw error;
-}
-
-export async function findOrCreateCaktoCustomer(supabase: SupabaseClient, email: string, userId: string) {
-  const profile = await getProfileByUserId(supabase, userId);
-  if (profile?.cakto_customer_id) return profile.cakto_customer_id;
-
-  // Cakto não tem API pública de "create customer" isolado;
-  // o customer é criado automaticamente no primeiro checkout.
-  // Aqui apenas retornamos null para o webhook preencher depois.
-  return null;
 }

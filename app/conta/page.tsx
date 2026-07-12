@@ -12,10 +12,11 @@ export default async function ContaPage() {
 
   const { data: profile } = await supabase
     .from("user_profiles")
-    .select("plan, subscription_status, subscription_expires_at, cakto_customer_id, cakto_subscription_id")
+    .select("plan, subscription_status, subscription_expires_at, cakto_customer_id, cakto_customer_email, cakto_subscription_id")
     .eq("id", user.id)
     .single();
 
+  const caktoCustomerId = profile?.cakto_customer_id || profile?.cakto_customer_email;
   const isPro = profile?.plan === "pro" 
     && profile?.subscription_status === "active" 
     && (!profile.subscription_expires_at || new Date(profile.subscription_expires_at) > new Date());
@@ -44,7 +45,7 @@ export default async function ContaPage() {
               </div>
               {isPro ? (
                 <Link 
-                  href={`https://app.cakto.com.br/cliente/${profile?.cakto_customer_id}`}
+                  href={`https://app.cakto.com.br/cliente/${caktoCustomerId}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="cp-btn text-sm"
@@ -81,7 +82,7 @@ export default async function ContaPage() {
             </div>
             <div className="bg-[#0a0f16] border border-border rounded-lg p-4">
               <p className="text-[11px] font-mono tracking-wide text-muted uppercase mb-1">Customer ID</p>
-              <p className="font-mono text-xs text-muted truncate">{profile?.cakto_customer_id || "—"}</p>
+              <p className="font-mono text-xs text-muted truncate">{caktoCustomerId || "—"}</p>
             </div>
           </div>
         </div>

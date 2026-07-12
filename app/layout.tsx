@@ -38,8 +38,8 @@ export const metadata: Metadata = {
     creator: "@criptopassivo",
   },
   robots: {
-    index: false,
-    follow: false,
+    index: true,
+    follow: true,
   },
   icons: {
     icon: "/favicon.svg",

@@ -23,3 +23,13 @@ export const addSaleSchema = z.object({
   sale_value: z.number().positive(),
   cost_value: z.number().nonnegative(),
 });
+
+export const caktoWebhookSchema = z.object({
+  secret: z.string().min(1),
+  event: z.string().min(1),
+  data: z.object({
+    id: z.string().min(1),
+    product: z.object({ id: z.string().min(1) }),
+    customer: z.object({ email: z.string().email() }),
+  }),
+});

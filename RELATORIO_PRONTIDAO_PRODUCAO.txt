@@ -1,0 +1,358 @@
+================================================================================
+RELATORIO DE PRONTIDAO PARA PRODUCAO - CriptoPassivo SaaS
+================================================================================
+
+Data: 2026-07-11
+Stack: Next.js 14.2.15 | Supabase SSR | Cakto | Upstash Redis | Zod | Tailwind
+Total de arquivos-fonte: ~37 (app/, lib/, components/)
+
+================================================================================
+1. CODIGO E BUILD
+================================================================================
+
+npx tsc --noEmit
+  - 10 erros TS6053, todos referentes a arquivos .next/types/**/*.ts que so
+    existem apos next build. Zero erros reais no codigo-fonte. Problema
+    conhecido do ecossistema Next.js; nao afeta build.
+
+next build
+  - Build OK - Compiled successfully, 12/12 static pages, zero erros, zero
+    warnings.
+  - Observacao: ESLint e ignorado no build (ignoreDuringBuilds: true em
+    next.config.js).
+
+console.log
+  - Zero console.log encontrados em app/, lib/, components/.
+  - 6 console.error legitimos (tratamento de erros em login, webhook, auth
+    callback). Aceitavel em producao.
+
+TODO / FIXME / HACK / XXX
+  - Zero encontrados em todo o repositorio. Codigo limpo.
+
+Chaves hardcoded em .ts/.tsx
+  - Zero chaves, tokens ou segredos hardcoded. Todas as referencias sensiveis
+    usam process.env. OK
+
+Artefatos indesejados
+  - lib/supabase/.server.ts.swp - arquivo de swap do Vim commitado. Deveria
+    ser removido e adicionado ao .gitignore.
+
+================================================================================
+2. VARIAVEIS DE AMBIENTE
+================================================================================
+
+Variaveis usadas pelo codigo:
+
+  NEXT_PUBLIC_SUPABASE_URL
+    -> lib/supabase/client.ts:5, lib/supabase/server.ts:8, middleware.ts:16
+
+  NEXT_PUBLIC_SUPABASE_ANON_KEY
+    -> lib/supabase/client.ts:6, lib/supabase/server.ts:9, middleware.ts:17
+
+  CAKTO_SAAS_PRODUCT_ID
+    -> lib/cakto.ts:3
+
+  CAKTO_WEBHOOK_SECRET
+    -> lib/cakto.ts:24
+
+  NEXT_PUBLIC_APP_URL
+    -> app/layout.tsx:16
+
+  UPSTASH_REDIS_REST_URL
+    -> lib/redis.ts:3 (via Redis.fromEnv())
+
+  UPSTASH_REDIS_REST_TOKEN
+    -> lib/redis.ts:3 (via Redis.fromEnv())
+
+  CAKTO_CHECKOUT_URL
+    -> app/actions/cakto.ts:21 (com fallback para "https://pay.cakto.com.br")
+
+Comparacao com .env.example:
+
+  Variavel                    .env.example  .env.local   Codigo
+  --------------------------  ----------    ----------   ------
+  NEXT_PUBLIC_APP_URL         OK            OK (localho) OK
+  NEXT_PUBLIC_SUPABASE_URL    OK            OK           OK
+  NEXT_PUBLIC_SUPABASE_ANON   OK            OK           OK
+  UPSTASH_REDIS_REST_URL      OK            OK           OK
+  UPSTASH_REDIS_REST_TOKEN    OK            OK           OK
+  CAKTO_API_KEY               OK            AUSENTE      Nao usado
+  CAKTO_WEBHOOK_SECRET        OK            AUSENTE      OK
+  CAKTO_SAAS_PRODUCT_ID       OK            AUSENTE      OK
+  CAKTO_CHECKOUT_URL          AUSENTE       AUSENTE      OK (fallback)
+
+Divergencias encontradas:
+  1. CAKTO_CHECKOUT_URL e usado em codigo mas nao documentado no .env.example
+     - funciona por ter fallback "https://pay.cakto.com.br".
+  2. CAKTO_API_KEY, CAKTO_WEBHOOK_SECRET, CAKTO_SAAS_PRODUCT_ID estao no
+     .env.example mas AUSENTES do .env.local - os webhooks nao funcionarao
+     sem essas variaveis em producao.
+  3. SUPABASE_SERVICE_ROLE_KEY nao esta em nenhum lugar - mas e necessaria
+     para o webhook (ver secao 3).
+
+================================================================================
+3. SEGURANCA
+================================================================================
+
+Middleware (middleware.ts):
+
+  Rota               Protegido?  Como
+  -----------------  ----------  -----------------------------------------
+  /dashboard/*       SIM         Redirect -> /login se nao autenticado
+  /conta/*           SIM         Redirect -> /login se nao autenticado
+  /api/prices        SIM         401 JSON se nao autenticado
+  /login             SIM         Redirect -> /dashboard se autenticado
+  /api/cakto/webhook NAO         Webhook externo, protegido por secret
+
+  Nota: /conta/* e protegida pelo middleware (correto).
+
+Webhook secret (app/api/cakto/webhook/route.ts:28):
+  - Valida event.secret contra CAKTO_WEBHOOK_SECRET antes de processar. OK
+  - Problema: Usa comparacao === simples (lib/cakto.ts:24), vulneravel a
+    timing attacks. Deveria usar crypto.timingSafeEqual().
+
+Protecao de rotas API:
+  - /api/prices - protegida por middleware + rate limiting (Upstash, 30req/60s). OK
+  - /api/cakto/webhook - protegida por secret no body. OK
+  - /auth/callback - publica (fluxo de auth). OK
+
+Zod em mutacoes Supabase:
+
+  Mutacao                          Arquivo                    Zod?   RLS?
+  -------------------------------  -------------------------  -----  -----
+  Insert portfolio_assets          DashboardClient.tsx:178    SIM    SIM
+  Update portfolio_assets          DashboardClient.tsx:199    SIM    SIM
+  Delete portfolio_assets          DashboardClient.tsx:222    N/A    SIM
+  Insert sales                     DashboardClient.tsx:240    SIM    SIM
+  Delete sales                     DashboardClient.tsx:261    N/A    SIM
+  Upsert user_profiles (webhook)   lib/cakto.ts:60,63         NAO    BLOQ
+  Update user_profiles (webhook)   lib/cakto.ts:72,86         NAO    BLOQ
+
+CRITICO - Webhook falhara por RLS + Service Role Key ausente:
+  - lib/supabase/server.ts cria cliente com anon key (linha 9).
+  - Em contexto de webhook, nao ha cookies de sessao -> auth.uid() retorna null.
+  - Todas as policies em user_profiles exigem auth.uid() = id.
+  - supabase.auth.admin.listUsers() (webhook route.ts:43) requer service_role
+    key - nao funciona com anon key.
+  - Impacto: activateProPlan, extendProPlan, revokeProPlanImmediate falharao
+    silenciosamente. Compras e cancelamentos de plano nunca atualizarao o
+    status do usuario.
+
+================================================================================
+4. FUNCIONALIDADE CAKTO + ACESSO
+================================================================================
+
+lib/cakto.ts - Funcoes de plano:
+
+  Funcao                        Status        Notas
+  ----------------------------  ------------  ---------------------------
+  verifyCaktoSecret             OK Completa   Comparacao === (ver secao 3)
+  getProfileByCaktoCustomerId   OK Completa   Helper privado
+  getProfileByUserId            OK Completa   Helper privado
+  activateProPlan               OK Completa   Mas chamada com email (ver baixo)
+  extendProPlan                 OK Completa   -
+  revokeProPlanImmediate        OK Completa   -
+  findOrCreateCaktoCustomer     INCOMPLETA    Retorna null sempre (documentado)
+
+BUG - Email passado como Customer ID:
+  - app/api/cakto/webhook/route.ts:47: activateProPlan(supabase, customerEmail,
+    subscriptionId, user.id)
+  - O parametro customerId recebe o email do customer, nao o ID do Cakto.
+  - O campo cakto_customer_id no banco armazenara um email.
+  - Consequencia: O link "Gerenciar no Cakto" em app/conta/page:47
+    (https://app.cakto.com.br/cliente/${profile?.cakto_customer_id}) gerara
+    URL incorreta.
+
+Bloqueio de recursos Pro:
+  - app/dashboard/page.tsx:19-21: isPro = plan='pro' AND status='active' AND
+    nao expirado. OK
+  - DashboardClient.tsx:34,174-176: Limite de 5 ativos para plano free. OK
+  - DashboardClient.tsx:556-571: Banner de upgrade Pro com link para checkout. OK
+  - Aba IR (IRTab): NAO e bloqueada para free. Usuarios free tem acesso total
+    a calculadora de IR - pode ser intencional ou nao.
+
+Webhook - Mapeamento de eventos:
+
+  Evento                  Acao                      Correto?
+  ----------------------  ------------------------  -------
+  purchase_approved       activateProPlan           SIM (mas bug do email)
+  subscription_renewed    extendProPlan             SIM
+  subscription_cancelled  revokeProPlanImmediate    SIM
+  payment_failed          revokeProPlanImmediate    SIM
+  charge_refunded         revokeProPlanImmediate    SIM
+
+Risco - listUsers() paginado:
+  - webhook/route.ts:43: supabase.auth.admin.listUsers() retorna apenas a
+    primeira pagina de usuarios. Se houver muitos usuarios, o alvo pode nao
+    ser encontrado e o evento purchase_approved sera silenciosamente ignorado.
+
+TODOs/Partes incompletas:
+  - Zero TODO/FIXME no codigo.
+  - O PLANO_IMPLEMENTACAO_SAAS_UPSELL.txt contem uma questao nao resolvida
+    (linha 393-406) sobre se o payload do purchase.approved contem items
+    array ou product.id diretamente - a implementacao assume product.id
+    diretamente.
+
+================================================================================
+5. SEO E METADADOS
+================================================================================
+
+app/layout.tsx:
+
+  Campo             Valor                                     Status
+  ----------------  ----------------------------------------  ------
+  title.default     "CriptoPassivo - Dashboard Renda Passiva" OK
+  title.template    "%s | CriptoPassivo"                      OK
+  description       Descricao completa                        OK
+  keywords          9 keywords relevantes                     OK
+  favicon           /favicon.svg (existe)                     OK
+  manifest          /site.webmanifest (existe)                OK
+  openGraph         Configurado com titulo, descricao, imagem OK
+  twitter           Configurado com card, titulo, imagem      OK
+  robots            index: false, follow: false                BLOQUEADOR
+
+robots - BLOQUEADOR:
+  - layout.tsx:40-42: robots: { index: false, follow: false } - O site inteiro
+    diz aos mecanismos de busca para NAO indexar. Deve ser alterado para
+    index: true, follow: true para lancamento publico.
+
+Assets ausentes:
+
+  Asset         Referenciado em        Existe?
+  ------------  ---------------------  -------
+  /favicon.svg  layout.tsx:45-47       SIM
+  /site.webmanifest  layout.tsx:49     SIM
+  /og-image.png layout.tsx:26,37       NAO - preview em redes sociais quebrado
+  robots.txt    -                      NAO existe
+  sitemap.xml   -                      NAO existe
+
+================================================================================
+6. PRONTO PARA DOMINIO PUBLICO
+================================================================================
+
+URLs hardcoded para localhost:
+
+  Arquivo          Linha  Conteudo                              Risco
+  ---------------  -----  ------------------------------------  ---------
+  .env.local       9      NEXT_PUBLIC_APP_URL=http://localho    DEVE ser alterado
+  app/layout.tsx   16     process.env.NEXT_PUBLIC_APP_URL       Fallback aceitavel
+                           || "http://localhost:3000"
+  .env.example     4      NEXT_PUBLIC_APP_URL=http://localho    Template - aceitavel
+
+Localhost/127.0.0.1/codespaces em codigo-fonte:
+  - Zero ocorrencias de 127.0.0.1, codespaces, github.dev, ngrok em arquivos
+    .ts/.tsx/.js. OK
+
+NEXT_PUBLIC_APP_URL - Referencias:
+
+  Arquivo              Uso
+  -------------------  ------------------------------------
+  app/layout.tsx:16    metadataBase para OpenGraph/Twitter
+
+  Apenas 1 lugar consome a variavel em codigo. O auth callback usa
+  requestUrl.origin e o login usa window.location.origin - correto.
+
+.env.local commitado no git:
+  - git ls-files confirma que .env.local ESTA rastreado pelo git - contem
+    credenciais reais do Supabase e Upstash.
+  - .gitignore lista .env.local, mas o arquivo ja foi commitado antes de ser
+    adicionado ao .gitignore.
+  - O arquivo NAO deveria estar no historico do git. Mesmo removendo agora,
+    as credenciais ficam no historico.
+
+================================================================================
+LISTA FINAL
+================================================================================
+
+--------------------------------------------------------------------------------
+BLOQUEADORES (impedem ir pro ar com seguranca)
+--------------------------------------------------------------------------------
+
+1. WEBHOOK NAO FUNCIONARA - FALTA SUPABASE_SERVICE_ROLE_KEY
+   O cliente Supabase do webhook usa anon key. Sem sessao de usuario, RLS
+   bloqueia todas as operacoes em user_profiles. Usuarios que comprarem ou
+   cancelarem nunca terao seu plano atualizado.
+   (lib/supabase/server.ts:9, app/api/cakto/webhook/route.ts:32)
+
+2. .ENV.LOCAL COM CREDENCIAIS REAIS COMMITADO NO GIT
+   Supabase URL + anon key + Upstash URL + token estao no historico do git.
+   Mesmo com .gitignore, o dano ja foi feito. Credenciais devem ser rotacionadas.
+   (git ls-files confirma presenca)
+
+3. ROBOTS: { INDEX: FALSE, FOLLOW: FALSE }
+   O site inteiro bloqueia indexacao por mecanismos de busca.
+   (app/layout.tsx:40-42)
+
+4. VARIAVEIS DE AMBIENTE CAKTO AUSENTES DO .ENV.LOCAL
+   CAKTO_WEBHOOK_SECRET, CAKTO_SAAS_PRODUCT_ID, CAKTO_API_KEY nao estao
+   configuradas. Sem elas, webhooks e checkout nao funcionam.
+
+5. NEXT_PUBLIC_APP_URL=HTTP://LOCALHOST:3000 NO .ENV.LOCAL
+   Deve ser a URL de producao antes do deploy.
+
+--------------------------------------------------------------------------------
+RECOMENDADO (nao bloqueia, mas deveria ser feito logo)
+--------------------------------------------------------------------------------
+
+6. WEBHOOK PASSA EMAIL COMO CUSTOMER ID (webhook/route.ts:47)
+   cakto_customer_id armazenara um email, quebrando o link "Gerenciar no Cakto"
+   em /conta.
+
+7. TIMING ATTACK NO SECRET DO WEBHOOK (lib/cakto.ts:24)
+   Usar crypto.timingSafeEqual() em vez de ===.
+
+8. SEM VALIDACAO ZOD NO PAYLOAD DO WEBHOOK (webhook/route.ts:26)
+   JSON parseado e tipado mas sem validacao runtime - payloads malformados
+   podem causar erros silenciosos.
+
+9. LISTUSERS() PAGINADO (webhook/route.ts:43)
+   Se houver >1000 usuarios, o alvo pode nao ser encontrado. Usar
+   getUserByEmail() em vez de listUsers.
+
+10. ABA IR SEM BLOQUEIO PRO (DashboardClient.tsx:800)
+    Usuarios free tem acesso total a calculadora de IR - pode ser intencional,
+    mas difere da logica de bloqueio de ativos.
+
+11. /OG-IMAGE.PNG AUSENTE - preview em redes sociais quebrado.
+
+12. SEM ROBOTS.TXT NEM SITEMAP.XML - SEO basico incompleto.
+
+13. LIB/SUPABASE/.SERVER.TS.SWP - arquivo de swap do Vim commitado.
+
+14. ESLINT DESABILITADO NO BUILD (next.config.js:3) - erros de lint passam
+    despercebidos.
+
+15. FINDORCREATECAKTOCUSTOMER (lib/cakto.ts:98-106) - funcao morta, retorna
+    null sempre, nunca chamada.
+
+16. CAKTO_CHECKOUT_URL - usado em codigo mas nao documentado no .env.example.
+
+--------------------------------------------------------------------------------
+OK (JA ESTA PRONTO)
+--------------------------------------------------------------------------------
+
+- Build do Next.js: limpo, zero erros, zero warnings
+- TypeScript: zero erros reais no codigo-fonte
+- Zero console.log em codigo de producao
+- Zero TODO/FIXME/HACK em todo o repositorio
+- Zero chaves hardcoded em arquivos .ts/.tsx - tudo via process.env
+- Middleware: protege corretamente /dashboard, /conta, /api/prices, /login
+- Zod: todas as mutacoes CRUD do dashboard usam schemas validados
+  (addAssetSchema, updateAssetSchema, addSaleSchema)
+- RLS: portfolio_assets e sales tem policies corretas por auth.uid()
+- Ownership checks: todas as operacoes CRUD filtram por user_id do usuario
+  autenticado
+- Rate limiting: /api/prices tem rate limit via Upstash (30 req/60s)
+- Validacao de redirect no auth callback: previne open redirects
+- Favicon: configurado e existe (/favicon.svg)
+- Manifest: configurado e existe (/site.webmanifest)
+- OpenGraph + Twitter: metadados completos (exceto imagem ausente)
+- .env.local esta no .gitignore (mas ja foi commitado antes)
+- Cakto webhook handler: mapeia corretamente 5 eventos (purchase_approved,
+  subscription_renewed, subscription_cancelled, payment_failed, charge_refunded)
+- Funcoes de plano: activateProPlan, extendProPlan, revokeProPlanImmediate
+  estao completas e sem stubs
+
+================================================================================
+FIM DO RELATORIO
+================================================================================

@@ -1,209 +1,1896 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stake Sem Medo — CriptoPassivo</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  :root {
-    --bg: #060912;
-    --bg2: #0a0e1a;
-    --card: #0f1424;
-    --border: #1a2040;
-    --green: #00ff88;
-    --blue: #00c4ff;
-    --text: #ffffff;
-    --text2: #8899bb;
-    --text3: #556688;
-  }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
-    line-height: 1.6;
-  }
-  .wrap { max-width: 720px; margin: 0 auto; padding: 0 20px; }
-  .accent-bar { height: 4px; background: linear-gradient(90deg, var(--green), var(--blue)); }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07110f">
+  <meta name="description" content="Entenda staking, liquid staking e DeFi com um guia prático em português, exemplos em reais e riscos explicados antes de movimentar sua cripto.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:title" content="Stake Sem Medo — clareza antes de colocar sua cripto para render">
+  <meta property="og:description" content="Um guia direto para comparar alternativas, entender riscos e evitar erros comuns em staking e DeFi.">
+  <link rel="canonical" href="https://criptopassivo.com.br/stake-sem-medo.html">
+  <title>Stake Sem Medo | Guia prático de staking e DeFi</title>
 
-  /* HERO */
-  .hero { padding: 60px 0 40px; text-align: center; }
-  .badge {
-    display: inline-block; font-size: 12px; letter-spacing: 3px; color: var(--green);
-    border: 1px solid var(--green); border-radius: 20px; padding: 6px 16px; margin-bottom: 24px;
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Stake Sem Medo",
+    "description": "Guia digital em português sobre staking, liquid staking, DeFi e segurança para quem já possui criptoativos.",
+    "brand": {
+      "@type": "Brand",
+      "name": "CriptoPassivo"
+    },
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "BRL",
+      "price": "27.90",
+      "availability": "https://schema.org/InStock",
+      "url": "https://pay.cakto.com.br/uky7ajx_978915"
+    }
   }
-  h1 {
-    font-family: Georgia, serif; font-size: 38px; line-height: 1.25; font-weight: 700;
-    margin-bottom: 20px;
-  }
-  h1 .hl { color: var(--green); }
-  .sub { font-size: 17px; color: var(--text2); max-width: 520px; margin: 0 auto 32px; }
-  .cta-btn {
-    display: inline-block; background: var(--green); color: #06170f; font-weight: 700;
-    font-size: 17px; padding: 18px 36px; border-radius: 10px; text-decoration: none;
-    box-shadow: 0 0 30px rgba(0,255,136,0.25);
-  }
-  .cta-sub { font-size: 13px; color: var(--text3); margin-top: 12px; }
+  </script>
 
-  /* SECTION */
-  section { padding: 50px 0; border-top: 1px solid var(--border); }
-  h2 {
-    font-family: Georgia, serif; font-size: 28px; margin-bottom: 24px; text-align: center;
-  }
-  .pain-list { list-style: none; }
-  .pain-list li {
-    display: flex; gap: 14px; align-items: flex-start; padding: 14px 0;
-    border-bottom: 1px solid var(--border); font-size: 16px; color: #dfe6f5;
-  }
-  .pain-list li:last-child { border-bottom: none; }
-  .x { color: #ff5566; font-weight: 700; flex-shrink: 0; }
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  .quote {
-    background: var(--card); border-left: 3px solid var(--green); border-radius: 8px;
-    padding: 24px; font-style: italic; font-family: Georgia, serif; font-size: 18px;
-    color: #dfe6f5; margin: 40px 0;
-  }
+    :root {
+      --bg: #050a09;
+      --bg-soft: #081310;
+      --surface: #0c1916;
+      --surface-2: #10211d;
+      --line: rgba(201, 255, 232, 0.12);
+      --line-strong: rgba(45, 242, 155, 0.32);
+      --green: #2df29b;
+      --green-dark: #062c1d;
+      --blue: #62d9ff;
+      --amber: #ffcb66;
+      --danger: #ff7b78;
+      --text: #f4fff9;
+      --muted: #a3bab0;
+      --muted-2: #718a80;
+      --shadow: 0 28px 80px rgba(0, 0, 0, 0.38);
+      --radius: 24px;
+      --container: 1160px;
+    }
 
-  .stat-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-  .stat-table th {
-    text-align: left; font-size: 12px; letter-spacing: 1px; color: var(--text3);
-    text-transform: uppercase; padding: 10px 12px; border-bottom: 1px solid var(--border);
-  }
-  .stat-table td {
-    padding: 14px 12px; font-size: 15px; border-bottom: 1px solid var(--border);
-  }
-  .stat-table td.num { color: var(--green); font-weight: 700; }
+    html {
+      scroll-behavior: smooth;
+    }
 
-  .compare-box {
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 24px; margin-top: 24px; font-size: 15px; color: var(--text2);
-  }
-  .compare-box b { color: var(--text); }
+    section[id] {
+      scroll-margin-top: 82px;
+    }
 
-  .chapters { list-style: none; }
-  .chapters li {
-    display: flex; gap: 14px; align-items: center; padding: 14px 0;
-    border-bottom: 1px solid var(--border); font-size: 15px;
-  }
-  .chapters li:last-child { border-bottom: none; }
-  .check { color: var(--green); font-size: 18px; flex-shrink: 0; }
+    body {
+      min-width: 320px;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(45, 242, 155, 0.09), transparent 28rem),
+        radial-gradient(circle at 90% 24%, rgba(98, 217, 255, 0.07), transparent 24rem),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
 
-  /* OFFER */
-  .offer-box {
-    background: var(--card); border: 1px solid var(--green); border-radius: 16px;
-    padding: 40px 30px; text-align: center; margin-top: 20px;
-  }
-  .price-old { font-size: 20px; color: var(--text3); text-decoration: line-through; }
-  .price-new { font-family: Georgia, serif; font-size: 56px; font-weight: 700; color: var(--green); margin: 10px 0; }
-  .price-note { font-size: 14px; color: var(--text2); margin-bottom: 28px; }
+    a {
+      color: inherit;
+    }
 
-  .guarantee {
-    display: flex; gap: 16px; align-items: center; background: var(--card);
-    border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 30px;
-  }
-  .guarantee-icon {
-    font-size: 32px; flex-shrink: 0; width: 50px; height: 50px; border-radius: 50%;
-    background: rgba(0,255,136,0.1); display: flex; align-items: center; justify-content: center;
-    color: var(--green); font-weight: 700;
-  }
+    button,
+    input {
+      font: inherit;
+    }
 
-  footer { text-align: center; padding: 40px 0; color: var(--text3); font-size: 13px; }
-  .risk-note { font-size: 12px; color: var(--text3); text-align: center; padding: 20px 0; max-width: 600px; margin: 0 auto; }
-</style>
+    .skip-link {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 1000;
+      transform: translateY(-160%);
+      border-radius: 10px;
+      background: var(--green);
+      color: #03120b;
+      padding: 10px 14px;
+      font-weight: 800;
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    .container {
+      width: min(var(--container), calc(100% - 40px));
+      margin-inline: auto;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--line);
+      background: rgba(5, 10, 9, 0.82);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      text-decoration: none;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 11px;
+      background: linear-gradient(145deg, rgba(45, 242, 155, 0.22), rgba(98, 217, 255, 0.08));
+      color: var(--green);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    .brand-mark::before {
+      content: "C";
+      font-size: 11px;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .nav-links > a:not(.nav-cta) {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .nav-links > a:not(.nav-cta):hover {
+      color: var(--text);
+    }
+
+    .nav-cta {
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: rgba(45, 242, 155, 0.1);
+      color: var(--green);
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 850;
+      text-decoration: none;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 92px 0 76px;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -20% 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
+      align-items: center;
+      gap: clamp(48px, 8vw, 100px);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 22px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 24px;
+      height: 1px;
+      background: currentColor;
+    }
+
+    h1,
+    h2,
+    h3 {
+      text-wrap: balance;
+    }
+
+    h1 {
+      max-width: 780px;
+      font-size: clamp(42px, 6.2vw, 76px);
+      line-height: 1.02;
+      letter-spacing: -0.062em;
+    }
+
+    h1 em {
+      color: var(--green);
+      font-style: normal;
+    }
+
+    .hero-lead {
+      max-width: 650px;
+      margin-top: 26px;
+      color: var(--muted);
+      font-size: clamp(18px, 2vw, 21px);
+      line-height: 1.65;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 34px;
+    }
+
+    .btn {
+      min-height: 56px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border: 1px solid transparent;
+      border-radius: 14px;
+      padding: 15px 22px;
+      font-weight: 900;
+      line-height: 1.15;
+      text-align: center;
+      text-decoration: none;
+      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-primary {
+      background: var(--green);
+      color: #03120b;
+      box-shadow: 0 16px 38px rgba(45, 242, 155, 0.18);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 18px 44px rgba(45, 242, 155, 0.27);
+    }
+
+    .btn-secondary {
+      border-color: var(--line);
+      background: rgba(255, 255, 255, 0.025);
+      color: var(--text);
+    }
+
+    .btn-arrow {
+      font-size: 18px;
+    }
+
+    .microcopy {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-top: 19px;
+      color: var(--muted-2);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .microcopy span::before {
+      content: "✓";
+      margin-right: 7px;
+      color: var(--green);
+    }
+
+    .product-visual {
+      position: relative;
+      min-height: 520px;
+      display: grid;
+      place-items: center;
+      isolation: isolate;
+    }
+
+    .product-visual::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      width: 430px;
+      height: 430px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(45, 242, 155, 0.15), transparent 66%);
+      filter: blur(8px);
+    }
+
+    .book {
+      position: relative;
+      width: min(330px, 78vw);
+      aspect-ratio: 0.76;
+      transform: perspective(1100px) rotateY(-10deg) rotateX(2deg) rotateZ(1deg);
+      border: 1px solid rgba(201, 255, 232, 0.26);
+      border-radius: 10px 20px 20px 10px;
+      background:
+        linear-gradient(135deg, rgba(45, 242, 155, 0.17), transparent 42%),
+        linear-gradient(155deg, #10251e 0%, #07110f 58%, #040807 100%);
+      box-shadow:
+        -13px 11px 0 #06100d,
+        -18px 18px 44px rgba(0, 0, 0, 0.5),
+        0 36px 100px rgba(45, 242, 155, 0.13);
+      overflow: hidden;
+    }
+
+    .book::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 18px;
+      width: 1px;
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: 4px 0 10px rgba(0, 0, 0, 0.35);
+    }
+
+    .book::after {
+      content: "";
+      position: absolute;
+      inset: auto -8% -16% 5%;
+      height: 58%;
+      transform: rotate(-18deg);
+      border: 1px solid rgba(45, 242, 155, 0.2);
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 0, rgba(98, 217, 255, 0.14), transparent 68%);
+    }
+
+    .book-content {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 38px 34px 32px 45px;
+    }
+
+    .book-kicker {
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .book-title {
+      margin-top: 45px;
+      font-size: clamp(42px, 5vw, 56px);
+      font-weight: 950;
+      line-height: 0.91;
+      letter-spacing: -0.065em;
+    }
+
+    .book-title span {
+      display: block;
+      color: var(--green);
+    }
+
+    .book-subtitle {
+      max-width: 220px;
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .book-footer {
+      margin-top: auto;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted-2);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .floating-note {
+      position: absolute;
+      right: 0;
+      bottom: 46px;
+      width: 218px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(12, 25, 22, 0.92);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .floating-note strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .floating-note span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .floating-dot {
+      width: 9px;
+      height: 9px;
+      display: inline-block;
+      margin-right: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 15px var(--green);
+    }
+
+    .trust-strip {
+      border-bottom: 1px solid var(--line);
+      background: rgba(8, 19, 16, 0.72);
+    }
+
+    .trust-items {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      min-height: 96px;
+    }
+
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 20px 28px;
+      border-right: 1px solid var(--line);
+    }
+
+    .trust-item:first-child {
+      padding-left: 0;
+    }
+
+    .trust-item:last-child {
+      border-right: 0;
+      padding-right: 0;
+    }
+
+    .trust-icon {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      flex: 0 0 auto;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: rgba(45, 242, 155, 0.08);
+      color: var(--green);
+      font-weight: 900;
+    }
+
+    .trust-copy strong,
+    .trust-copy span {
+      display: block;
+    }
+
+    .trust-copy strong {
+      font-size: 14px;
+    }
+
+    .trust-copy span {
+      margin-top: 2px;
+      color: var(--muted-2);
+      font-size: 12px;
+    }
+
+    .section {
+      padding: 110px 0;
+    }
+
+    .section-soft {
+      border-block: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(12, 25, 22, 0.62), rgba(5, 10, 9, 0.25));
+    }
+
+    .section-head {
+      max-width: 760px;
+      margin-bottom: 48px;
+    }
+
+    .section-head.center {
+      margin-inline: auto;
+      text-align: center;
+    }
+
+    .section-label {
+      display: block;
+      margin-bottom: 14px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      font-size: clamp(34px, 4.7vw, 58px);
+      line-height: 1.08;
+      letter-spacing: -0.052em;
+    }
+
+    .section-head p {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .problem-card,
+    .path-card,
+    .content-card {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(145deg, rgba(16, 33, 29, 0.86), rgba(8, 19, 16, 0.72));
+      padding: 26px;
+    }
+
+    .problem-card {
+      min-height: 230px;
+    }
+
+    .card-number {
+      display: block;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+    }
+
+    .problem-card h3,
+    .path-card h3,
+    .content-card h3 {
+      margin-top: 26px;
+      font-size: 20px;
+      line-height: 1.25;
+      letter-spacing: -0.025em;
+    }
+
+    .problem-card p,
+    .path-card p,
+    .content-card p {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .manifesto {
+      display: grid;
+      grid-template-columns: 0.8fr 1.2fr;
+      gap: 56px;
+      align-items: center;
+      margin-top: 38px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(120deg, rgba(45, 242, 155, 0.11), transparent 55%),
+        var(--surface);
+      padding: 38px;
+    }
+
+    .manifesto-quote {
+      font-size: clamp(26px, 3.2vw, 40px);
+      font-weight: 900;
+      line-height: 1.12;
+      letter-spacing: -0.045em;
+    }
+
+    .manifesto-list {
+      display: grid;
+      gap: 16px;
+      list-style: none;
+    }
+
+    .manifesto-list li {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 13px;
+      color: var(--muted);
+    }
+
+    .manifesto-list li::before {
+      content: "✓";
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      background: rgba(45, 242, 155, 0.11);
+      color: var(--green);
+      font-weight: 900;
+    }
+
+    .paths-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .path-card {
+      position: relative;
+      min-height: 310px;
+      overflow: hidden;
+    }
+
+    .path-card::after {
+      content: "";
+      position: absolute;
+      right: -40px;
+      bottom: -40px;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(45, 242, 155, 0.08), transparent 68%);
+    }
+
+    .path-tag {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      padding: 5px 9px;
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .path-card h3 {
+      margin-top: 28px;
+      font-size: 24px;
+    }
+
+    .risk-line {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: var(--amber);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .bitcoin-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-top: 22px;
+      border: 1px solid rgba(255, 203, 102, 0.26);
+      border-radius: 16px;
+      background: rgba(255, 203, 102, 0.055);
+      padding: 18px 20px;
+      color: #dccda9;
+      font-size: 14px;
+    }
+
+    .bitcoin-note strong {
+      color: var(--amber);
+    }
+
+    .content-layout {
+      display: grid;
+      grid-template-columns: 1.4fr 0.6fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .content-card {
+      min-height: 190px;
+    }
+
+    .content-card h3 {
+      margin-top: 22px;
+      font-size: 18px;
+    }
+
+    .transparency-card {
+      position: sticky;
+      top: 96px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 30px;
+    }
+
+    .transparency-card h3 {
+      font-size: 24px;
+      letter-spacing: -0.035em;
+    }
+
+    .plain-list {
+      display: grid;
+      gap: 14px;
+      margin-top: 24px;
+      list-style: none;
+    }
+
+    .plain-list li {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .plain-list li::before {
+      content: "—";
+      color: var(--green);
+      font-weight: 900;
+    }
+
+    .transparency-card .btn {
+      width: 100%;
+      margin-top: 28px;
+    }
+
+    .calculator-shell {
+      display: grid;
+      grid-template-columns: 0.85fr 1.15fr;
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: var(--surface);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .calculator-copy {
+      padding: 44px;
+      background:
+        linear-gradient(150deg, rgba(45, 242, 155, 0.1), transparent 58%),
+        var(--surface-2);
+    }
+
+    .calculator-copy h2 {
+      font-size: clamp(34px, 4.2vw, 52px);
+    }
+
+    .calculator-copy p {
+      margin-top: 18px;
+      color: var(--muted);
+    }
+
+    .calculator {
+      padding: 44px;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-prefix,
+    .input-suffix {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted-2);
+      font-weight: 800;
+      pointer-events: none;
+    }
+
+    .input-prefix {
+      left: 16px;
+    }
+
+    .input-suffix {
+      right: 16px;
+    }
+
+    .field input {
+      width: 100%;
+      height: 56px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      outline: none;
+      background: rgba(5, 10, 9, 0.66);
+      color: var(--text);
+      padding: 0 44px;
+      font-weight: 850;
+    }
+
+    .field input:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 4px rgba(45, 242, 155, 0.1);
+    }
+
+    .results {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .result {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(45, 242, 155, 0.045);
+      padding: 20px;
+    }
+
+    .result span,
+    .result output {
+      display: block;
+    }
+
+    .result span {
+      color: var(--muted-2);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .result output {
+      margin-top: 6px;
+      color: var(--green);
+      font-size: clamp(25px, 3vw, 36px);
+      font-weight: 950;
+      letter-spacing: -0.045em;
+    }
+
+    .calculator-note {
+      margin-top: 18px;
+      color: var(--muted-2);
+      font-size: 12px;
+    }
+
+    .risk-panel {
+      display: grid;
+      grid-template-columns: 0.75fr 1.25fr;
+      gap: 56px;
+      align-items: start;
+      border: 1px solid rgba(255, 123, 120, 0.23);
+      border-radius: 30px;
+      background:
+        linear-gradient(120deg, rgba(255, 123, 120, 0.065), transparent 55%),
+        var(--surface);
+      padding: 48px;
+    }
+
+    .risk-panel h2 {
+      font-size: clamp(34px, 4.3vw, 52px);
+    }
+
+    .risk-panel h2 span {
+      color: var(--danger);
+    }
+
+    .risk-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .risk-item {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(5, 10, 9, 0.43);
+      padding: 18px;
+    }
+
+    .risk-item strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .risk-item span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .offer-shell {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      border: 1px solid var(--line-strong);
+      border-radius: 32px;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(45, 242, 155, 0.1), transparent 30rem),
+        var(--surface);
+      overflow: hidden;
+      box-shadow: 0 38px 120px rgba(0, 0, 0, 0.48);
+    }
+
+    .offer-main {
+      padding: 54px;
+    }
+
+    .offer-main h2 {
+      font-size: clamp(38px, 4.8vw, 60px);
+    }
+
+    .offer-main > p {
+      max-width: 650px;
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .offer-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px 28px;
+      margin-top: 34px;
+      list-style: none;
+    }
+
+    .offer-list li {
+      display: grid;
+      grid-template-columns: 26px 1fr;
+      gap: 10px;
+      color: #d9ebe3;
+      font-size: 14px;
+    }
+
+    .offer-list li::before {
+      content: "✓";
+      width: 25px;
+      height: 25px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: rgba(45, 242, 155, 0.1);
+      color: var(--green);
+      font-weight: 950;
+    }
+
+    .offer-aside {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border-left: 1px solid var(--line);
+      background: rgba(5, 10, 9, 0.4);
+      padding: 48px;
+    }
+
+    .price-label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .price {
+      display: flex;
+      align-items: flex-start;
+      margin-top: 9px;
+      color: var(--green);
+      font-weight: 950;
+      letter-spacing: -0.065em;
+    }
+
+    .price-currency {
+      margin-top: 10px;
+      margin-right: 7px;
+      font-size: 21px;
+      letter-spacing: -0.03em;
+    }
+
+    .price-value {
+      font-size: clamp(58px, 7vw, 82px);
+      line-height: 1;
+    }
+
+    .price-detail {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .offer-aside .btn {
+      width: 100%;
+      margin-top: 26px;
+    }
+
+    .guarantee {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 13px;
+      align-items: start;
+      margin-top: 22px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+    }
+
+    .guarantee-badge {
+      min-height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      color: var(--green);
+      padding: 0 10px;
+      font-size: 11px;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .guarantee strong,
+    .guarantee span {
+      display: block;
+    }
+
+    .guarantee span {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .offer-disclosure {
+      margin-top: 22px;
+      color: var(--muted-2);
+      font-size: 11px;
+    }
+
+    .faq {
+      max-width: 850px;
+      margin-inline: auto;
+    }
+
+    .faq details {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .faq summary {
+      position: relative;
+      cursor: pointer;
+      list-style: none;
+      padding: 24px 48px 24px 0;
+      font-size: 18px;
+      font-weight: 850;
+    }
+
+    .faq summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .faq summary::after {
+      content: "+";
+      position: absolute;
+      top: 21px;
+      right: 0;
+      color: var(--green);
+      font-size: 24px;
+      font-weight: 500;
+    }
+
+    .faq details[open] summary::after {
+      content: "−";
+    }
+
+    .faq details p {
+      max-width: 740px;
+      padding: 0 48px 24px 0;
+      color: var(--muted);
+    }
+
+    .final-cta {
+      padding: 0 0 100px;
+      text-align: center;
+    }
+
+    .final-cta-inner {
+      border-top: 1px solid var(--line);
+      padding-top: 82px;
+    }
+
+    .final-cta h2 {
+      max-width: 760px;
+      margin-inline: auto;
+    }
+
+    .final-cta p {
+      max-width: 590px;
+      margin: 18px auto 28px;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .site-footer {
+      border-top: 1px solid var(--line);
+      background: #030706;
+      padding: 44px 0 108px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 0.7fr 1.3fr;
+      gap: 48px;
+      align-items: start;
+    }
+
+    .footer-brand {
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+
+    .footer-brand span {
+      color: var(--green);
+    }
+
+    .footer-copy {
+      color: var(--muted-2);
+      font-size: 12px;
+    }
+
+    .footer-copy p + p {
+      margin-top: 10px;
+    }
+
+    .mobile-buy {
+      position: fixed;
+      right: 12px;
+      bottom: 12px;
+      left: 12px;
+      z-index: 120;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: 16px;
+      background: rgba(8, 19, 16, 0.94);
+      padding: 10px;
+      box-shadow: 0 18px 54px rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(18px);
+    }
+
+    .mobile-price {
+      padding-left: 7px;
+    }
+
+    .mobile-price span,
+    .mobile-price strong {
+      display: block;
+    }
+
+    .mobile-price span {
+      color: var(--muted-2);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .mobile-price strong {
+      color: var(--green);
+      font-size: 19px;
+    }
+
+    .mobile-buy .btn {
+      min-height: 46px;
+      padding: 11px 16px;
+      font-size: 13px;
+    }
+
+    :focus-visible {
+      outline: 3px solid rgba(98, 217, 255, 0.9);
+      outline-offset: 3px;
+    }
+
+    @media (max-width: 1020px) {
+      .hero-grid,
+      .calculator-shell,
+      .offer-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-copy {
+        max-width: 780px;
+      }
+
+      .product-visual {
+        min-height: 500px;
+      }
+
+      .floating-note {
+        right: 12%;
+      }
+
+      .problem-grid,
+      .paths-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .content-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .transparency-card {
+        position: static;
+      }
+
+      .risk-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .offer-aside {
+        border-top: 1px solid var(--line);
+        border-left: 0;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .container {
+        width: min(100% - 28px, var(--container));
+      }
+
+      .nav {
+        min-height: 64px;
+      }
+
+      .nav-links > a:not(.nav-cta) {
+        display: none;
+      }
+
+      .nav-cta {
+        padding: 9px 12px;
+        font-size: 12px;
+      }
+
+      .hero {
+        padding: 64px 0 56px;
+      }
+
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 42px;
+      }
+
+      h1 {
+        font-size: clamp(40px, 13.5vw, 58px);
+      }
+
+      .hero-lead {
+        font-size: 17px;
+      }
+
+      .hero-actions,
+      .hero-actions .btn {
+        width: 100%;
+      }
+
+      .microcopy {
+        display: grid;
+        gap: 7px;
+      }
+
+      .product-visual {
+        min-height: 440px;
+      }
+
+      .book {
+        width: min(280px, 78vw);
+      }
+
+      .book-content {
+        padding: 32px 27px 28px 38px;
+      }
+
+      .book-title {
+        margin-top: 36px;
+      }
+
+      .floating-note {
+        right: 0;
+        bottom: 14px;
+        width: 190px;
+      }
+
+      .trust-items,
+      .manifesto,
+      .content-grid,
+      .field-grid,
+      .results,
+      .risk-grid,
+      .offer-list,
+      .footer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .trust-item,
+      .trust-item:first-child,
+      .trust-item:last-child {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+        padding: 18px 0;
+      }
+
+      .trust-item:last-child {
+        border-bottom: 0;
+      }
+
+      .section {
+        padding: 82px 0;
+      }
+
+      .section-head {
+        margin-bottom: 34px;
+      }
+
+      .section-head p {
+        font-size: 16px;
+      }
+
+      .problem-grid,
+      .paths-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .problem-card,
+      .path-card,
+      .content-card {
+        min-height: auto;
+      }
+
+      .manifesto {
+        gap: 30px;
+        padding: 28px;
+      }
+
+      .calculator-copy,
+      .calculator,
+      .offer-main,
+      .offer-aside,
+      .risk-panel {
+        padding: 30px 24px;
+      }
+
+      .offer-aside {
+        padding-bottom: 38px;
+      }
+
+      .faq summary {
+        padding-right: 36px;
+        font-size: 16px;
+      }
+
+      .faq details p {
+        padding-right: 20px;
+      }
+
+      .mobile-buy {
+        display: flex;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
 </head>
+
 <body>
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
 
-<div class="accent-bar"></div>
+  <header class="site-header">
+    <nav class="container nav" aria-label="Navegação principal">
+      <a class="brand" href="#inicio" aria-label="CriptoPassivo — início">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>CriptoPassivo</span>
+      </a>
 
-<div class="wrap">
-  <div class="hero">
-    <span class="badge">CRIPTOPASSIVO</span>
-    <h1>Sua cripto está <span class="hl">parada</span> perdendo dinheiro todo mês — e você nem sabe</h1>
-    <p class="sub">O guia direto ao ponto pra ativar staking, liquid staking e yield farming e transformar sua cripto parada em renda passiva real. Sem economês, sem hype.</p>
-    <a href="https://pay.cakto.com.br/uky7ajx_978915" class="cta-btn">Quero destravar meu rendimento agora</a>
-    <div class="cta-sub">Acesso imediato após a compra • R$ 27,90</div>
-  </div>
-</div>
+      <div class="nav-links">
+        <a href="#metodo">O método</a>
+        <a href="#conteudo-guia">Conteúdo</a>
+        <a href="#duvidas">Dúvidas</a>
+        <a class="nav-cta" href="https://pay.cakto.com.br/uky7ajx_978915" data-checkout>Acessar por R$ 27,90</a>
+      </div>
+    </nav>
+  </header>
 
-<section>
-  <div class="wrap">
-    <h2>Isso é você agora?</h2>
-    <ul class="pain-list">
-      <li><span class="x">✕</span> Comprou cripto e só fica olhando o gráfico subir e descer</li>
-      <li><span class="x">✕</span> Acha que a valorização de preço já é o suficiente</li>
-      <li><span class="x">✕</span> Nunca ativou o botão "Earn" que já está disponível de graça no seu próprio app</li>
-      <li><span class="x">✕</span> Está perdendo de 3% a 16% ao ano só por não saber que isso existia</li>
-    </ul>
-    <div class="quote">
-      "Dinheiro parado em cripto sem render é a mesma coisa que deixar o cofre aberto e não pegar o que já é seu."
-    </div>
-  </div>
-</section>
+  <main id="conteudo">
+    <section class="hero" id="inicio">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <span class="eyebrow">Guia prático • acesso imediato</span>
+          <h1>Antes de colocar sua cripto para render, entenda <em>onde está pisando.</em></h1>
+          <p class="hero-lead">
+            Um guia direto em português para comparar staking, liquid staking e DeFi, identificar riscos e seguir processos com mais segurança — sem trading e sem promessa de lucro.
+          </p>
 
-<section>
-  <div class="wrap">
-    <h2>Stake Sem Medo</h2>
-    <p class="sub" style="text-align:left; max-width:none;">Não é curso caro, não é promessa de ficar rico rápido. É o processo real que testei na prática — staking, liquid staking e yield farming — com passo a passo, números em reais e os avisos de risco que ninguém que vende curso caro costuma mencionar.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="https://pay.cakto.com.br/uky7ajx_978915" data-checkout>
+              Quero acessar o guia por R$ 27,90
+              <span class="btn-arrow" aria-hidden="true">→</span>
+            </a>
+            <a class="btn btn-secondary" href="#conteudo-guia">Ver o que vou aprender</a>
+          </div>
 
-    <table class="stat-table">
-      <tr><th>Capital investido</th><th>Ganho mensal passivo</th></tr>
-      <tr><td>R$ 10.000</td><td class="num">R$ 45/mês</td></tr>
-      <tr><td>R$ 50.000</td><td class="num">R$ 229/mês</td></tr>
-      <tr><td>R$ 100.000</td><td class="num">R$ 458/mês</td></tr>
-      <tr><td>R$ 500.000</td><td class="num">R$ 2.291/mês</td></tr>
-    </table>
+          <div class="microcopy" aria-label="Informações da compra">
+            <span>Pagamento único</span>
+            <span>Entrega por e-mail</span>
+            <span>7 dias de garantia</span>
+          </div>
+        </div>
 
-    <div class="compare-box">
-      <b>Por que isso importa pro brasileiro:</b> a poupança rende cerca de 0,5% ao mês em reais. O yield farming em stablecoins oferece de 5% a 15% ao ano em <b>dólares</b>. Isso te protege da desvalorização do real e ainda te dá rendimento superior.
-    </div>
-  </div>
-</section>
+        <div class="product-visual" role="img" aria-label="Mockup ilustrativo da capa do guia Stake Sem Medo">
+          <div class="book" aria-hidden="true">
+            <div class="book-content">
+              <span class="book-kicker">CriptoPassivo apresenta</span>
+              <div class="book-title">Stake <span>Sem Medo</span></div>
+              <p class="book-subtitle">Clareza, processo e segurança antes de movimentar sua cripto.</p>
+              <div class="book-footer">Guia prático • edição digital</div>
+            </div>
+          </div>
 
-<section>
-  <div class="wrap">
-    <h2>O que você vai destravar</h2>
-    <ul class="chapters">
-      <li><span class="check">✓</span> Staking explicado sem economês</li>
-      <li><span class="check">✓</span> Staking vs Liquid Staking vs Yield Farming</li>
-      <li><span class="check">✓</span> Passo a passo completo: Staking na Binance</li>
-      <li><span class="check">✓</span> Passo a passo completo: Liquid Staking na Lido Finance</li>
-      <li><span class="check">✓</span> Passo a passo completo: Stablecoins no Aave</li>
-      <li><span class="check">✓</span> Tabela de APY atualizada por moeda (2026)</li>
-      <li><span class="check">✓</span> Simulações reais de ganho por faixa de capital</li>
-      <li><span class="check">✓</span> Os 5 erros que fazem iniciante perder dinheiro</li>
-      <li><span class="check">✓</span> Checklist de segurança contra golpes e sites falsos</li>
-    </ul>
-  </div>
-</section>
+          <div class="floating-note" aria-hidden="true">
+            <strong><span class="floating-dot"></span>Primeiro entenda.</strong>
+            <span>Depois compare, simule e decida.</span>
+          </div>
+        </div>
+      </div>
+    </section>
 
-<section>
-  <div class="wrap">
-    <h2>Acesso hoje por</h2>
-    <div class="offer-box">
-      <div class="price-old">R$ 97,00</div>
-      <div class="price-new">R$ 27,90</div>
-      <div class="price-note">Menos que um lanche, pra parar de perder dinheiro todo mês</div>
-      <a href="https://pay.cakto.com.br/uky7ajx_978915" class="cta-btn">Quero parar de perder dinheiro agora</a>
-      <div class="cta-sub">Acesso imediato após a compra, direto no seu e-mail</div>
-    </div>
-
-    <div class="guarantee">
-      <div class="guarantee-icon">7</div>
-      <div>
-        <b style="display:block; margin-bottom:4px;">Garantia de 7 dias</b>
-        <span style="color:var(--text2); font-size:14px;">Sem risco pra testar o processo. Se não fizer sentido pra você, devolvemos 100%.</span>
+    <div class="trust-strip" aria-label="Diferenciais do guia">
+      <div class="container trust-items">
+        <div class="trust-item">
+          <span class="trust-icon" aria-hidden="true">BR</span>
+          <div class="trust-copy">
+            <strong>Português claro</strong>
+            <span>Sem depender de jargão técnico</span>
+          </div>
+        </div>
+        <div class="trust-item">
+          <span class="trust-icon" aria-hidden="true">R$</span>
+          <div class="trust-copy">
+            <strong>Exemplos em reais</strong>
+            <span>Cenários para entender a matemática</span>
+          </div>
+        </div>
+        <div class="trust-item">
+          <span class="trust-icon" aria-hidden="true">!</span>
+          <div class="trust-copy">
+            <strong>Riscos à vista</strong>
+            <span>Sem esconder as contrapartidas</span>
+          </div>
+        </div>
       </div>
     </div>
+
+    <section class="section" aria-labelledby="problema-title">
+      <div class="container">
+        <div class="section-head">
+          <span class="section-label">O problema real</span>
+          <h2 id="problema-title">Ter cripto é simples. Saber o que fazer com ela não é.</h2>
+          <p>O botão parece fácil. O que existe por trás dele — taxa, prazo, custódia e risco — quase nunca vem explicado com a mesma clareza.</p>
+        </div>
+
+        <div class="problem-grid">
+          <article class="problem-card">
+            <span class="card-number">01</span>
+            <h3>“Earn” sem contexto</h3>
+            <p>Uma taxa aparece na tela, mas você ainda precisa entender de onde ela vem, por quanto tempo vale e o que pode mudar.</p>
+          </article>
+          <article class="problem-card">
+            <span class="card-number">02</span>
+            <h3>Jargão demais</h3>
+            <p>APR, APY, lockup, slashing, depeg e gas parecem outro idioma quando ninguém conecta os termos à decisão.</p>
+          </article>
+          <article class="problem-card">
+            <span class="card-number">03</span>
+            <h3>Medo de golpe</h3>
+            <p>Sites falsos, permissões de carteira e links patrocinados tornam um clique desatento muito mais caro que o guia.</p>
+          </article>
+          <article class="problem-card">
+            <span class="card-number">04</span>
+            <h3>Tudo parece igual</h3>
+            <p>Staking, lending e yield farming são vendidos como sinônimos, apesar de usarem mecanismos e riscos diferentes.</p>
+          </article>
+        </div>
+
+        <div class="manifesto">
+          <p class="manifesto-quote">Você não precisa de mais uma promessa. Precisa de um mapa.</p>
+          <ul class="manifesto-list">
+            <li>Entender o que acontece com o ativo depois da confirmação.</li>
+            <li>Comparar rendimento potencial, liquidez, taxas e riscos no mesmo raciocínio.</li>
+            <li>Reconhecer quando uma oportunidade não combina com o seu perfil ou objetivo.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-soft" id="metodo" aria-labelledby="metodo-title">
+      <div class="container">
+        <div class="section-head center">
+          <span class="section-label">Sem misturar conceitos</span>
+          <h2 id="metodo-title">Quatro caminhos. Mecânicas e riscos diferentes.</h2>
+          <p>O Stake Sem Medo organiza o assunto para você saber o que está comparando antes de escolher uma plataforma.</p>
+        </div>
+
+        <div class="paths-grid">
+          <article class="path-card">
+            <span class="path-tag">Proof of Stake</span>
+            <h3>Staking</h3>
+            <p>Você delega ou bloqueia um ativo elegível para participar da segurança de uma rede e pode receber recompensas.</p>
+            <div class="risk-line">Observe: prazo, validador, slashing e custódia.</div>
+          </article>
+          <article class="path-card">
+            <span class="path-tag">Token de recibo</span>
+            <h3>Liquid staking</h3>
+            <p>Além das recompensas, você recebe um token representando a posição — com uma camada adicional de protocolo.</p>
+            <div class="risk-line">Observe: contrato inteligente, liquidez e descolamento.</div>
+          </article>
+          <article class="path-card">
+            <span class="path-tag">Empréstimo DeFi</span>
+            <h3>Supply / lending</h3>
+            <p>Ativos são fornecidos a um protocolo de liquidez e a taxa varia conforme oferta, demanda e parâmetros do mercado.</p>
+            <div class="risk-line">Observe: taxa variável, depeg, rede e protocolo.</div>
+          </article>
+          <article class="path-card">
+            <span class="path-tag">Estratégia avançada</span>
+            <h3>Yield farming</h3>
+            <p>Combina pools, incentivos e movimentações entre protocolos. Pode aumentar a complexidade e os pontos de falha.</p>
+            <div class="risk-line">Observe: perda impermanente, taxas e múltiplos contratos.</div>
+          </article>
+        </div>
+
+        <p class="bitcoin-note">
+          <span aria-hidden="true">⚠</span>
+          <span><strong>Importante:</strong> Bitcoin não possui staking nativo. Serviços que oferecem rendimento sobre BTC normalmente envolvem empréstimo, custódia ou versões tokenizadas — e devem ser avaliados como produtos diferentes.</span>
+        </p>
+      </div>
+    </section>
+
+    <section class="section" id="conteudo-guia" aria-labelledby="conteudo-title">
+      <div class="container">
+        <div class="section-head">
+          <span class="section-label">12 capítulos práticos</span>
+          <h2 id="conteudo-title">Da primeira definição ao checklist antes de confirmar.</h2>
+          <p>Conteúdo construído para reduzir dúvidas, organizar comparações e evitar que pressa pareça estratégia.</p>
+        </div>
+
+        <div class="content-layout">
+          <div class="content-grid">
+            <article class="content-card">
+              <span class="card-number">01</span>
+              <h3>Descobrir quais ativos são elegíveis</h3>
+              <p>O que pode ter staking nativo e o que depende de outro tipo de serviço.</p>
+            </article>
+            <article class="content-card">
+              <span class="card-number">02</span>
+              <h3>Decodificar APR e APY</h3>
+              <p>Como ler taxas, periodicidade e composição sem confundir estimativa com garantia.</p>
+            </article>
+            <article class="content-card">
+              <span class="card-number">03</span>
+              <h3>Comparar exchange e DeFi</h3>
+              <p>Custódia, conveniência, autonomia, taxas de rede e responsabilidades.</p>
+            </article>
+            <article class="content-card">
+              <span class="card-number">04</span>
+              <h3>Entender os fluxos na prática</h3>
+              <p>Binance, Lido e Aave explicados como processos, com os pontos de atenção.</p>
+            </article>
+            <article class="content-card">
+              <span class="card-number">05</span>
+              <h3>Simular cenários em reais</h3>
+              <p>Como transformar taxas anuais em estimativas compreensíveis e comparar alternativas.</p>
+            </article>
+            <article class="content-card">
+              <span class="card-number">06</span>
+              <h3>Reconhecer armadilhas</h3>
+              <p>Sites falsos, permissões excessivas, retornos improváveis e pressão para decidir.</p>
+            </article>
+            <article class="content-card">
+              <span class="card-number">07</span>
+              <h3>Planejar entrada e saída</h3>
+              <p>Prazos de desbloqueio, liquidez, taxas e o que verificar antes de precisar do dinheiro.</p>
+            </article>
+            <article class="content-card">
+              <span class="card-number">08</span>
+              <h3>Usar o checklist de segurança</h3>
+              <p>Uma última revisão para diminuir erros operacionais antes de qualquer confirmação.</p>
+            </article>
+          </div>
+
+          <aside class="transparency-card" aria-label="O que o produto não promete">
+            <span class="section-label">Transparência</span>
+            <h3>O que você não vai encontrar</h3>
+            <ul class="plain-list">
+              <li>Renda garantida ou taxa fixa para sempre.</li>
+              <li>Sinal de compra ou indicação personalizada.</li>
+              <li>Bot automático movimentando seus ativos.</li>
+              <li>Atalho para eliminar os riscos de cripto.</li>
+            </ul>
+            <a class="btn btn-primary" href="https://pay.cakto.com.br/uky7ajx_978915" data-checkout>Quero aprender com clareza</a>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-soft" id="simulador" aria-labelledby="simulador-title">
+      <div class="container">
+        <div class="calculator-shell">
+          <div class="calculator-copy">
+            <span class="section-label">Calculadora educativa</span>
+            <h2 id="simulador-title">Simule cenários, não promessas.</h2>
+            <p>Altere o capital e a taxa hipotética para entender a ordem de grandeza. O resultado é uma estimativa matemática, não uma previsão.</p>
+          </div>
+
+          <form class="calculator" id="calculator" onsubmit="return false;">
+            <div class="field-grid">
+              <div class="field">
+                <label for="capital">Capital de referência</label>
+                <div class="input-wrap">
+                  <span class="input-prefix">R$</span>
+                  <input id="capital" name="capital" type="number" value="10000" min="0" step="100" inputmode="decimal">
+                </div>
+              </div>
+              <div class="field">
+                <label for="apy">APY hipotético</label>
+                <div class="input-wrap">
+                  <input id="apy" name="apy" type="number" value="5.5" min="0" max="100" step="0.1" inputmode="decimal">
+                  <span class="input-suffix">%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="results" aria-live="polite">
+              <div class="result">
+                <span>Estimativa anual bruta</span>
+                <output id="annual-result" for="capital apy">R$ 550,00</output>
+              </div>
+              <div class="result">
+                <span>Equivalente mensal</span>
+                <output id="monthly-result" for="capital apy">R$ 44,75</output>
+              </div>
+            </div>
+
+            <p class="calculator-note">
+              Hipótese de APY constante e composição mensal. Não considera taxas, impostos, variação do preço do ativo, câmbio, depeg, slashing, bloqueios ou falhas de plataforma/protocolo.
+            </p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="riscos" aria-labelledby="riscos-title">
+      <div class="container">
+        <div class="risk-panel">
+          <div>
+            <span class="section-label">Segurança primeiro</span>
+            <h2 id="riscos-title">Rendimento nunca vem <span>sozinho.</span></h2>
+          </div>
+          <div class="risk-grid">
+            <div class="risk-item"><strong>Preço do ativo</strong><span>A recompensa pode não compensar uma queda de mercado.</span></div>
+            <div class="risk-item"><strong>Liquidez</strong><span>Desbloqueio e retirada podem levar tempo ou ter custo.</span></div>
+            <div class="risk-item"><strong>Custódia</strong><span>Ao usar terceiros, você também assume o risco operacional deles.</span></div>
+            <div class="risk-item"><strong>Contrato inteligente</strong><span>Auditoria reduz risco, mas não elimina falhas de código.</span></div>
+            <div class="risk-item"><strong>Stablecoin e câmbio</strong><span>Pareamento com dólar não transforma o ativo em depósito bancário.</span></div>
+            <div class="risk-item"><strong>Taxas e tributos</strong><span>O resultado líquido pode ser menor que a taxa exibida.</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-soft" id="oferta" aria-labelledby="oferta-title">
+      <div class="container">
+        <div class="offer-shell">
+          <div class="offer-main">
+            <span class="section-label">Comece pela clareza</span>
+            <h2 id="oferta-title">Stake Sem Medo</h2>
+            <p>Um guia digital para quem prefere entender o processo e os riscos antes de movimentar seu patrimônio.</p>
+
+            <ul class="offer-list">
+              <li>12 capítulos em linguagem direta</li>
+              <li>Comparação entre quatro modalidades</li>
+              <li>Fluxos de Binance, Lido e Aave</li>
+              <li>Simulações e leitura de APY</li>
+              <li>Os cinco erros mais comuns</li>
+              <li>Checklist contra golpes e sites falsos</li>
+            </ul>
+          </div>
+
+          <div class="offer-aside">
+            <span class="price-label">Pagamento único</span>
+            <div class="price" aria-label="Vinte e sete reais e noventa centavos">
+              <span class="price-currency">R$</span>
+              <span class="price-value">27,90</span>
+            </div>
+            <p class="price-detail">Sem mensalidade neste produto.</p>
+
+            <a class="btn btn-primary" href="https://pay.cakto.com.br/uky7ajx_978915" data-checkout>
+              Acessar o guia agora
+              <span class="btn-arrow" aria-hidden="true">→</span>
+            </a>
+
+            <div class="guarantee">
+              <span class="guarantee-badge" aria-hidden="true">7 dias</span>
+              <div>
+                <strong>7 dias de garantia</strong>
+                <span>Se o conteúdo não fizer sentido para você, solicite o reembolso dentro do prazo.</span>
+              </div>
+            </div>
+
+            <p class="offer-disclosure">Este checkout inclui o e-book Stake Sem Medo. Eventuais ferramentas ou produtos apresentados depois são opcionais e não são necessários para usar o guia.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="duvidas" aria-labelledby="faq-title">
+      <div class="container">
+        <div class="section-head center">
+          <span class="section-label">Perguntas frequentes</span>
+          <h2 id="faq-title">Dúvidas antes de começar</h2>
+        </div>
+
+        <div class="faq">
+          <details>
+            <summary>Preciso já ter criptomoedas?</summary>
+            <p>O guia foi pensado principalmente para quem já possui algum criptoativo e quer entender alternativas de rendimento. Você também pode estudá-lo antes de decidir movimentar qualquer valor.</p>
+          </details>
+          <details>
+            <summary>O guia garante rendimento?</summary>
+            <p>Não. Taxas variam por ativo, rede, plataforma e condições de mercado. O objetivo é ensinar a analisar possibilidades e riscos, não prometer retorno.</p>
+          </details>
+          <details>
+            <summary>Bitcoin tem staking?</summary>
+            <p>Não possui staking nativo. Ofertas de rendimento sobre BTC normalmente envolvem custódia, empréstimo ou versões tokenizadas. O guia ajuda a entender essa diferença.</p>
+          </details>
+          <details>
+            <summary>Preciso de carteira própria?</summary>
+            <p>Depende do caminho. Serviços dentro de uma exchange podem usar a custódia da própria plataforma. Protocolos como Lido e Aave exigem carteira compatível, atenção às permissões e pagamento de taxas de rede.</p>
+          </details>
+          <details>
+            <summary>Existem custos além do e-book?</summary>
+            <p>O preço desta oferta é apenas do guia. Se você decidir realizar operações, plataformas e redes podem cobrar taxas, e pode haver incidência tributária conforme sua situação.</p>
+          </details>
+          <details>
+            <summary>Como recebo o material?</summary>
+            <p>Após a confirmação do pagamento, o acesso é enviado para o e-mail informado no checkout.</p>
+          </details>
+          <details>
+            <summary>O dashboard CriptoPassivo está incluído?</summary>
+            <p>Não. Este checkout é do e-book Stake Sem Medo. Caso outra ferramenta seja apresentada depois da compra, ela será opcional e terá condições próprias.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="final-cta" aria-labelledby="final-title">
+      <div class="container final-cta-inner">
+        <span class="section-label">Próximo passo</span>
+        <h2 id="final-title">Troque a pressa por um processo que você consegue explicar.</h2>
+        <p>Aprenda a comparar mecanismos, simular cenários e reconhecer riscos antes de confirmar qualquer operação.</p>
+        <a class="btn btn-primary" href="https://pay.cakto.com.br/uky7ajx_978915" data-checkout>
+          Quero o Stake Sem Medo por R$ 27,90
+          <span class="btn-arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">Cripto<span>Passivo</span> © <span id="year">2026</span></div>
+      <div class="footer-copy">
+        <p>Conteúdo exclusivamente educacional. Não constitui recomendação de investimento, análise individual ou promessa de rentabilidade. Criptoativos envolvem risco de perda parcial ou total, volatilidade, falhas operacionais e mudanças regulatórias.</p>
+        <p>As taxas citadas no material devem ser conferidas diretamente nas plataformas na data de uso. Ao comprar, você também estará sujeito aos termos da plataforma de pagamento.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="mobile-buy" aria-label="Atalho para compra">
+    <div class="mobile-price">
+      <span>Pagamento único</span>
+      <strong>R$ 27,90</strong>
+    </div>
+    <a class="btn btn-primary" href="https://pay.cakto.com.br/uky7ajx_978915" data-checkout>Acessar agora</a>
   </div>
-</section>
 
-<div class="risk-note">
-  Conteúdo educacional. Não constitui recomendação de investimento. Criptomoedas envolvem riscos — invista apenas o que você pode perder.
-</div>
+  <script>
+    (() => {
+      const capitalInput = document.getElementById("capital");
+      const apyInput = document.getElementById("apy");
+      const annualOutput = document.getElementById("annual-result");
+      const monthlyOutput = document.getElementById("monthly-result");
+      const currency = new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+        maximumFractionDigits: 2
+      });
 
-<footer>CRIPTOPASSIVO.COM.BR © 2026</footer>
+      function updateCalculator() {
+        const capital = Math.max(0, Number(capitalInput.value) || 0);
+        const apy = Math.min(100, Math.max(0, Number(apyInput.value) || 0));
+        const annual = capital * (apy / 100);
+        const monthlyRate = Math.pow(1 + apy / 100, 1 / 12) - 1;
+        const monthly = capital * monthlyRate;
 
-<div class="accent-bar"></div>
+        annualOutput.textContent = currency.format(annual);
+        monthlyOutput.textContent = currency.format(monthly);
+      }
 
+      capitalInput.addEventListener("input", updateCalculator);
+      apyInput.addEventListener("input", updateCalculator);
+      updateCalculator();
+
+      document.getElementById("year").textContent = new Date().getFullYear();
+
+      document.querySelectorAll("[data-checkout]").forEach((link) => {
+        link.addEventListener("click", () => {
+          window.dataLayer = window.dataLayer || [];
+          window.dataLayer.push({ event: "checkout_intent", product: "stake_sem_medo", value: 27.9, currency: "BRL" });
+
+          if (typeof window.fbq === "function") {
+            window.fbq("trackCustom", "CheckoutIntent", { value: 27.9, currency: "BRL" });
+          }
+
+          window.dispatchEvent(new CustomEvent("criptoPassivo:checkoutClick", {
+            detail: { product: "stake_sem_medo", value: 27.9, currency: "BRL" }
+          }));
+        });
+      });
+    })();
+  </script>
 </body>
 </html>

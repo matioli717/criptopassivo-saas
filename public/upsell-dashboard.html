@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Espera — ative seu dashboard | CriptoPassivo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #060912;
+    --card: #0f1424;
+    --border: #1a2040;
+    --green: #00ff88;
+    --blue: #00c4ff;
+    --purple: #a78bfa;
+    --text: #ffffff;
+    --text2: #8899bb;
+    --text3: #556688;
+  }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, 'Segoe UI', Arial, sans-serif; line-height: 1.6;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 0 20px; }
+  .accent-bar { height: 4px; background: linear-gradient(90deg, var(--green), var(--blue)); }
+
+  .top-warning {
+    text-align: center; padding: 16px 0; background: rgba(255,170,0,0.08);
+    border-bottom: 1px solid rgba(255,170,0,0.3); color: #ffaa00; font-size: 13px; font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .hero { padding: 50px 0 30px; text-align: center; }
+  h1 {
+    font-family: Georgia, serif; font-size: 32px; line-height: 1.3; font-weight: 700;
+    margin-bottom: 18px;
+  }
+  h1 .hl { color: var(--green); }
+  .sub { font-size: 16px; color: var(--text2); max-width: 500px; margin: 0 auto; }
+
+  section { padding: 34px 0; border-top: 1px solid var(--border); }
+
+  .reinforce {
+    background: var(--card); border-left: 3px solid var(--blue); border-radius: 8px;
+    padding: 22px; font-size: 16px; color: #dfe6f5;
+  }
+
+  h2 { font-family: Georgia, serif; font-size: 24px; margin-bottom: 20px; text-align: center; }
+  .h2-sub { text-align: center; color: var(--text2); font-size: 14px; margin-top: -14px; margin-bottom: 24px; }
+
+  .dash-preview {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; margin-bottom: 10px;
+  }
+  .kpi-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .kpi { flex: 1; min-width: 120px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+  .kpi-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-value { font-family: Georgia, serif; font-size: 20px; font-weight: 700; margin-top: 4px; }
+  .kpi-value.g { color: var(--green); }
+  .kpi-value.b { color: var(--blue); }
+  .kpi-value.p { color: var(--purple); }
+
+  .feature-grid { display: flex; flex-direction: column; gap: 0; }
+  .feature-item {
+    display: flex; gap: 14px; align-items: flex-start; padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .feature-item:last-child { border-bottom: none; }
+  .feature-icon {
+    width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700;
+  }
+  .feature-icon.g { background: rgba(0,255,136,0.12); color: var(--green); }
+  .feature-icon.b { background: rgba(0,196,255,0.12); color: var(--blue); }
+  .feature-icon.p { background: rgba(167,139,250,0.12); color: var(--purple); }
+  .feature-text b { display: block; font-size: 15px; margin-bottom: 3px; }
+  .feature-text span { font-size: 13.5px; color: var(--text2); }
+
+  .plans { display: flex; flex-direction: column; gap: 14px; }
+  .plan-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 22px; position: relative;
+  }
+  .plan-card.featured { border-color: var(--green); }
+  .plan-tag {
+    position: absolute; top: -11px; left: 20px; background: var(--green); color: #06170f;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.5px; padding: 4px 12px; border-radius: 20px;
+  }
+  .plan-name { font-size: 15px; color: var(--text2); margin-bottom: 6px; }
+  .plan-price { font-family: Georgia, serif; font-size: 30px; font-weight: 700; }
+  .plan-price span { font-size: 14px; color: var(--text3); font-weight: 400; }
+  .plan-note { font-size: 12.5px; color: var(--text3); margin: 6px 0 16px; }
+  .plan-btn {
+    display: block; text-align: center; text-decoration: none; font-weight: 700;
+    font-size: 15px; padding: 14px; border-radius: 10px;
+  }
+  .plan-btn.primary { background: var(--green); color: #06170f; }
+  .plan-btn.secondary { background: transparent; border: 1px solid #2a3358; color: var(--text); }
+
+  .cta-secondary-link {
+    display: block; text-align: center; color: var(--text3); font-size: 13px;
+    text-decoration: underline; margin-top: 20px;
+  }
+
+  .urgency {
+    text-align: center; font-size: 13px; color: #ffaa00; margin-top: 24px;
+    background: rgba(255,170,0,0.06); border: 1px solid rgba(255,170,0,0.2);
+    border-radius: 8px; padding: 14px;
+  }
+
+  footer { text-align: center; padding: 30px 0; color: var(--text3); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="accent-bar"></div>
+<div class="top-warning">ESPERA — ANTES DE ACESSAR SEU E-BOOK, VEJA ISSO</div>
+
+<div class="wrap">
+  <div class="hero">
+    <h1>O e-book te deu o mapa. <span class="hl">O dashboard faz o trabalho</span> por você</h1>
+    <p class="sub">Você acabou de aprender a destravar rendimento na cripto parada. Agora veja a ferramenta que acompanha, calcula e alerta tudo isso automaticamente — sem planilha manual, sem adivinhação.</p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="reinforce">
+      O capítulo 8 do e-book mostrou quanto R$10 mil a R$500 mil rendem em staking. O problema é acompanhar isso na mão, todo mês, em múltiplas moedas. O dashboard CriptoPassivo faz esse cálculo em tempo real — e avisa quando sua carteira sai do equilíbrio ideal.
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Seu dashboard, ao vivo</h2>
+    <div class="h2-sub">Preço atualizado a cada 20 segundos via CoinGecko</div>
+    <div class="dash-preview">
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-label">Valor da carteira</div>
+          <div class="kpi-value g">R$ 47.230</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Rendimento/mês</div>
+          <div class="kpi-value b">R$ 216</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Maior desvio</div>
+          <div class="kpi-value p">+4.2%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>O que o dashboard faz por você</h2>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <div class="feature-icon g">R$</div>
+        <div class="feature-text">
+          <b>Carteira com preço real ao vivo</b>
+          <span>Cadastra a quantidade real de cada ativo — o valor atualiza sozinho puxando o preço direto da CoinGecko, sem você digitar valor fixo toda vez.</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon b">%</div>
+        <div class="feature-text">
+          <b>Alerta de rebalanceamento</b>
+          <span>Gráfico mostra o desvio da sua alocação ideal (Core/Estável/Satélite/Reserva) e avisa visualmente quando passar de ±3 pontos percentuais.</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon g">↗</div>
+        <div class="feature-text">
+          <b>Calculadora de rendimento composto</b>
+          <span>Projeção de crescimento em 12 meses por ativo, com juros compostos calculados automaticamente.</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon p">IR</div>
+        <div class="feature-text">
+          <b>Declaração de Imposto de Renda simplificada</b>
+          <span>Registra suas vendas, calcula o ganho de capital, verifica automaticamente a isenção de R$35 mil/mês e aplica a alíquota progressiva certa.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Escolha seu acesso</h2>
+
+    <div class="plans">
+      <div class="plan-card featured">
+        <div class="plan-tag">MAIS ESCOLHIDO</div>
+        <div class="plan-name">Mensal</div>
+        <div class="plan-price">R$ 57,90 <span>/mês</span></div>
+        <div class="plan-note">Ativos ilimitados, sem fidelidade, cancela quando quiser</div>
+        <a href="#" class="plan-btn primary">Ativar dashboard agora</a>
+      </div>
+
+      <div class="plan-card">
+        <div class="plan-name">Anual</div>
+        <div class="plan-price">R$ 555,84 <span>/ano</span></div>
+        <div class="plan-note">Equivale a R$46,32/mês — 20% de desconto</div>
+        <a href="#" class="plan-btn secondary">Quero o plano anual</a>
+      </div>
+
+      <div class="plan-card">
+        <div class="plan-name">Vitalício</div>
+        <div class="plan-price">R$ 997 <span>único</span></div>
+        <div class="plan-note">Pagamento único, acesso pra sempre, sem mensalidade</div>
+        <a href="#" class="plan-btn secondary">Quero acesso vitalício</a>
+      </div>
+    </div>
+
+    <a href="#" class="cta-secondary-link">Não, prefiro seguir só com o e-book por enquanto</a>
+
+    <div class="urgency">
+      Essa tela de upgrade só aparece agora, logo após sua compra. Depois de sair, o preço promocional some.
+    </div>
+  </div>
+</section>
+
+<footer>CRIPTOPASSIVO.COM.BR © 2026</footer>
+<div class="accent-bar"></div>
+
+</body>
+</html>

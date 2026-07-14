@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stake Sem Medo — CriptoPassivo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #060912;
+    --bg2: #0a0e1a;
+    --card: #0f1424;
+    --border: #1a2040;
+    --green: #00ff88;
+    --blue: #00c4ff;
+    --text: #ffffff;
+    --text2: #8899bb;
+    --text3: #556688;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 20px; }
+  .accent-bar { height: 4px; background: linear-gradient(90deg, var(--green), var(--blue)); }
+
+  /* HERO */
+  .hero { padding: 60px 0 40px; text-align: center; }
+  .badge {
+    display: inline-block; font-size: 12px; letter-spacing: 3px; color: var(--green);
+    border: 1px solid var(--green); border-radius: 20px; padding: 6px 16px; margin-bottom: 24px;
+  }
+  h1 {
+    font-family: Georgia, serif; font-size: 38px; line-height: 1.25; font-weight: 700;
+    margin-bottom: 20px;
+  }
+  h1 .hl { color: var(--green); }
+  .sub { font-size: 17px; color: var(--text2); max-width: 520px; margin: 0 auto 32px; }
+  .cta-btn {
+    display: inline-block; background: var(--green); color: #06170f; font-weight: 700;
+    font-size: 17px; padding: 18px 36px; border-radius: 10px; text-decoration: none;
+    box-shadow: 0 0 30px rgba(0,255,136,0.25);
+  }
+  .cta-sub { font-size: 13px; color: var(--text3); margin-top: 12px; }
+
+  /* SECTION */
+  section { padding: 50px 0; border-top: 1px solid var(--border); }
+  h2 {
+    font-family: Georgia, serif; font-size: 28px; margin-bottom: 24px; text-align: center;
+  }
+  .pain-list { list-style: none; }
+  .pain-list li {
+    display: flex; gap: 14px; align-items: flex-start; padding: 14px 0;
+    border-bottom: 1px solid var(--border); font-size: 16px; color: #dfe6f5;
+  }
+  .pain-list li:last-child { border-bottom: none; }
+  .x { color: #ff5566; font-weight: 700; flex-shrink: 0; }
+
+  .quote {
+    background: var(--card); border-left: 3px solid var(--green); border-radius: 8px;
+    padding: 24px; font-style: italic; font-family: Georgia, serif; font-size: 18px;
+    color: #dfe6f5; margin: 40px 0;
+  }
+
+  .stat-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  .stat-table th {
+    text-align: left; font-size: 12px; letter-spacing: 1px; color: var(--text3);
+    text-transform: uppercase; padding: 10px 12px; border-bottom: 1px solid var(--border);
+  }
+  .stat-table td {
+    padding: 14px 12px; font-size: 15px; border-bottom: 1px solid var(--border);
+  }
+  .stat-table td.num { color: var(--green); font-weight: 700; }
+
+  .compare-box {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 24px; margin-top: 24px; font-size: 15px; color: var(--text2);
+  }
+  .compare-box b { color: var(--text); }
+
+  .chapters { list-style: none; }
+  .chapters li {
+    display: flex; gap: 14px; align-items: center; padding: 14px 0;
+    border-bottom: 1px solid var(--border); font-size: 15px;
+  }
+  .chapters li:last-child { border-bottom: none; }
+  .check { color: var(--green); font-size: 18px; flex-shrink: 0; }
+
+  /* OFFER */
+  .offer-box {
+    background: var(--card); border: 1px solid var(--green); border-radius: 16px;
+    padding: 40px 30px; text-align: center; margin-top: 20px;
+  }
+  .price-old { font-size: 20px; color: var(--text3); text-decoration: line-through; }
+  .price-new { font-family: Georgia, serif; font-size: 56px; font-weight: 700; color: var(--green); margin: 10px 0; }
+  .price-note { font-size: 14px; color: var(--text2); margin-bottom: 28px; }
+
+  .guarantee {
+    display: flex; gap: 16px; align-items: center; background: var(--card);
+    border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 30px;
+  }
+  .guarantee-icon {
+    font-size: 32px; flex-shrink: 0; width: 50px; height: 50px; border-radius: 50%;
+    background: rgba(0,255,136,0.1); display: flex; align-items: center; justify-content: center;
+    color: var(--green); font-weight: 700;
+  }
+
+  footer { text-align: center; padding: 40px 0; color: var(--text3); font-size: 13px; }
+  .risk-note { font-size: 12px; color: var(--text3); text-align: center; padding: 20px 0; max-width: 600px; margin: 0 auto; }
+</style>
+</head>
+<body>
+
+<div class="accent-bar"></div>
+
+<div class="wrap">
+  <div class="hero">
+    <span class="badge">CRIPTOPASSIVO</span>
+    <h1>Sua cripto está <span class="hl">parada</span> perdendo dinheiro todo mês — e você nem sabe</h1>
+    <p class="sub">O guia direto ao ponto pra ativar staking, liquid staking e yield farming e transformar sua cripto parada em renda passiva real. Sem economês, sem hype.</p>
+    <a href="https://pay.cakto.com.br/uky7ajx_978915" class="cta-btn">Quero destravar meu rendimento agora</a>
+    <div class="cta-sub">Acesso imediato após a compra • R$ 27,90</div>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <h2>Isso é você agora?</h2>
+    <ul class="pain-list">
+      <li><span class="x">✕</span> Comprou cripto e só fica olhando o gráfico subir e descer</li>
+      <li><span class="x">✕</span> Acha que a valorização de preço já é o suficiente</li>
+      <li><span class="x">✕</span> Nunca ativou o botão "Earn" que já está disponível de graça no seu próprio app</li>
+      <li><span class="x">✕</span> Está perdendo de 3% a 16% ao ano só por não saber que isso existia</li>
+    </ul>
+    <div class="quote">
+      "Dinheiro parado em cripto sem render é a mesma coisa que deixar o cofre aberto e não pegar o que já é seu."
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Stake Sem Medo</h2>
+    <p class="sub" style="text-align:left; max-width:none;">Não é curso caro, não é promessa de ficar rico rápido. É o processo real que testei na prática — staking, liquid staking e yield farming — com passo a passo, números em reais e os avisos de risco que ninguém que vende curso caro costuma mencionar.</p>
+
+    <table class="stat-table">
+      <tr><th>Capital investido</th><th>Ganho mensal passivo</th></tr>
+      <tr><td>R$ 10.000</td><td class="num">R$ 45/mês</td></tr>
+      <tr><td>R$ 50.000</td><td class="num">R$ 229/mês</td></tr>
+      <tr><td>R$ 100.000</td><td class="num">R$ 458/mês</td></tr>
+      <tr><td>R$ 500.000</td><td class="num">R$ 2.291/mês</td></tr>
+    </table>
+
+    <div class="compare-box">
+      <b>Por que isso importa pro brasileiro:</b> a poupança rende cerca de 0,5% ao mês em reais. O yield farming em stablecoins oferece de 5% a 15% ao ano em <b>dólares</b>. Isso te protege da desvalorização do real e ainda te dá rendimento superior.
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>O que você vai destravar</h2>
+    <ul class="chapters">
+      <li><span class="check">✓</span> Staking explicado sem economês</li>
+      <li><span class="check">✓</span> Staking vs Liquid Staking vs Yield Farming</li>
+      <li><span class="check">✓</span> Passo a passo completo: Staking na Binance</li>
+      <li><span class="check">✓</span> Passo a passo completo: Liquid Staking na Lido Finance</li>
+      <li><span class="check">✓</span> Passo a passo completo: Stablecoins no Aave</li>
+      <li><span class="check">✓</span> Tabela de APY atualizada por moeda (2026)</li>
+      <li><span class="check">✓</span> Simulações reais de ganho por faixa de capital</li>
+      <li><span class="check">✓</span> Os 5 erros que fazem iniciante perder dinheiro</li>
+      <li><span class="check">✓</span> Checklist de segurança contra golpes e sites falsos</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Acesso hoje por</h2>
+    <div class="offer-box">
+      <div class="price-old">R$ 97,00</div>
+      <div class="price-new">R$ 27,90</div>
+      <div class="price-note">Menos que um lanche, pra parar de perder dinheiro todo mês</div>
+      <a href="https://pay.cakto.com.br/uky7ajx_978915" class="cta-btn">Quero parar de perder dinheiro agora</a>
+      <div class="cta-sub">Acesso imediato após a compra, direto no seu e-mail</div>
+    </div>
+
+    <div class="guarantee">
+      <div class="guarantee-icon">7</div>
+      <div>
+        <b style="display:block; margin-bottom:4px;">Garantia de 7 dias</b>
+        <span style="color:var(--text2); font-size:14px;">Sem risco pra testar o processo. Se não fizer sentido pra você, devolvemos 100%.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="risk-note">
+  Conteúdo educacional. Não constitui recomendação de investimento. Criptomoedas envolvem riscos — invista apenas o que você pode perder.
+</div>
+
+<footer>CRIPTOPASSIVO.COM.BR © 2026</footer>
+
+<div class="accent-bar"></div>
+
+</body>
+</html>
